@@ -1,0 +1,112 @@
+/// file: schema.prisma
+/// Jackson Hurley, Kaitlyn Maes, Cam Horine
+/// Defines the database schema for the application using Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  email         String   @id @db.VarChar(255)
+  name          String   @db.VarChar(255)
+  passwordHash  String   @db.VarChar(255) // Salted hash stored here
+  role          String   @db.VarChar(50)
+  isActive      Boolean  @default(true)
+  emailVerified Boolean  @default(false)
+  createdAt     DateTime @default(now()) @db.Timestamp(6)
+
+  // Relations
+  userProfile        UserProfiles?
+  publicPreferences  PublicPreferences?
+  privatePreferences PrivatePreferences?
+  petPeeves          PetPeeves[]
+  matchesAsUser1     Matches[] @relation("User1Matches")
+  matchesAsUser2     Matches[] @relation("User2Matches")
+
+  @@map("users")
+}
+
+model UserProfiles {
+  id                   Int       @id @default(autoincrement())
+  userEmail            String    @unique @db.VarChar(255)
+  profilePicture       String?   @db.VarChar(500)
+  bio                  String?   @db.Text
+  major                String?   @db.VarChar(100)
+  graduationYear       Int?
+  gender               String?   @db.VarChar(50)
+  pronouns             String?   @db.VarChar(50)
+  dietaryRestrictions  String?   @db.VarChar(255)
+  createdAt            DateTime  @default(now()) @db.Timestamp(6)
+
+  // Relations
+  user Users @relation(fields: [userEmail], references: [email], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+model PublicPreferences {
+  id              Int      @id @default(autoincrement())
+  userEmail       String   @unique @db.VarChar(255)
+  sleepSchedule   String?  @db.VarChar(100)
+  cleanliness     String?  @db.VarChar(50)
+  noiseLevel      String?  @db.VarChar(50)
+  guestsFrequency String?  @db.VarChar(50)
+  socialLevel     String?  @db.VarChar(50)
+
+  // Relations
+  user Users @relation(fields: [userEmail], references: [email], onDelete: Cascade)
+
+  @@map("public_preferences")
+}
+
+model PrivatePreferences {
+  id                 Int      @id @default(autoincrement())
+  userEmail          String   @unique @db.VarChar(255)
+  religiousPreference String? @db.VarChar(100)
+  politicalLeaning   String?  @db.VarChar(100)
+  dealBreakers       String?  @db.Text
+  drinking           String?  @db.VarChar(50)
+  smoking            String?  @db.VarChar(50)
+
+  // Relations
+  user Users @relation(fields: [userEmail], references: [email], onDelete: Cascade)
+
+  @@map("private_preferences")
+}
+
+model PetPeeves {
+  id        Int      @id @default(autoincrement())
+  userEmail String   @db.VarChar(255)
+  petPeeve  String   @db.VarChar(255)
+  severity  String   @db.VarChar(50)
+  isPublic  Boolean  @default(true)
+
+  // Relations
+  user Users @relation(fields: [userEmail], references: [email], onDelete: Cascade)
+
+  @@map("pet_peeves")
+}
+
+model Matches {
+  id         Int      @id @default(autoincrement())
+  userEmail1 String   @db.VarChar(255)
+  userEmail2 String   @db.VarChar(255)
+  matchScore Float?
+  status     String   @db.VarChar(50)
+  matchedAt  DateTime @default(now()) @db.Timestamp(6)
+
+  // Relations
+  user1 Users @relation("User1Matches", fields: [userEmail1], references: [email], onDelete: Cascade)
+  user2 Users @relation("User2Matches", fields: [userEmail2], references: [email], onDelete: Cascade)
+
+  // Prevent duplicate matches between same two users (regardless of order)
+  @@unique([userEmail1, userEmail2])
+  @@index([userEmail1])
+  @@index([userEmail2])
+  @@map("matches")
+}
