@@ -59,7 +59,7 @@ const Login = () => {
         if (contentType && contentType.includes('application/json')) {
           userData = await response.json();
         } else {
-          const text = await response.text();
+          await response.text();
           throw new Error('Invalid response format');
         }
       } catch (parseError) {
