@@ -3,7 +3,59 @@
 /// API endpoint for user management operations
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { PrismaClient } from '@prisma/client';
+import argon2 from 'argon2';
 
-export default function handler(req: VercelRequest, res: VercelResponse) {
-  res.status(200).json({ message: 'Endpoint not implemented yet' });
+const prisma = new PrismaClient();
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Handle CORS
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  if (req.method === 'POST') {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password are required' });
+      }
+
+      // Find user by email
+      const user = await prisma.users.findUnique({
+        where: { email: email.toLowerCase() },
+      });
+
+      if (!user) {
+        return res.status(401).json({ error: 'Invalid email or password' });
+      }
+
+      // Verify password
+      const isValidPassword = await argon2.verify(user.passwordHash, password);
+
+      if (!isValidPassword) {
+        return res.status(401).json({ error: 'Invalid email or password' });
+      }
+
+      // Return user info including isMatched
+      return res.status(200).json({
+        email: user.email,
+        name: user.name,
+        isMatched: user.isMatched,
+      });
+    } catch (error: any) {
+      console.error('Login error:', error);
+      const errorMessage = error?.message || 'Internal server error';
+      return res.status(500).json({ error: errorMessage });
+    }
+  }
+
+  res.status(405).json({ error: 'Method not allowed' });
 }
