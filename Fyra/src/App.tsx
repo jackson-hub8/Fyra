@@ -7,7 +7,6 @@ import Login from './pages/Login';
 import Home from './pages/Home';
 import SignupPage1 from './pages/SignupPage1';
 import SignupPage2 from './pages/SignupPage2';
-import Matched from './pages/Matched';
 import Unmatched from './pages/Unmatched';
 
 const App = () => {
@@ -18,7 +17,7 @@ const App = () => {
         <Route path="/home" element={<Home />} />
         <Route path="/signup" element={<SignupPage1 />} />
         <Route path="/signup/password" element={<SignupPage2 />} />
-        <Route path="/matched" element={<Matched />} />
+        <Route path="/matched" element={<Home />} />
         <Route path="/unmatched" element={<Unmatched />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

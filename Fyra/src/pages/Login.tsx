@@ -34,7 +34,6 @@ const Login = () => {
       });
 
       if (!response.ok) {
-        // Try to parse error response, but handle empty responses
         let errorMessage = 'Login failed';
         try {
           const contentType = response.headers.get('content-type');
@@ -46,7 +45,6 @@ const Login = () => {
             errorMessage = text || errorMessage;
           }
         } catch (parseError) {
-          // If parsing fails, use status text
           errorMessage = response.statusText || errorMessage;
         }
         throw new Error(errorMessage);
@@ -66,7 +64,6 @@ const Login = () => {
         throw new Error('Failed to parse server response');
       }
 
-      // Route based on isMatched status
       if (userData.isMatched) {
         navigate('/matched');
       } else {
