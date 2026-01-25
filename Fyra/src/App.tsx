@@ -5,6 +5,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Home from './pages/Home';
+import SignupPage1 from './pages/SignupPage1';
+import SignupPage2 from './pages/SignupPage2';
 
 const App = () => {
   return (
@@ -12,6 +14,8 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/home" element={<Home />} />
+        <Route path="/signup" element={<SignupPage1 />} />
+        <Route path="/signup/password" element={<SignupPage2 />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

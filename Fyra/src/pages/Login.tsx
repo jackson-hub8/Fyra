@@ -47,7 +47,10 @@ const Login = () => {
             </button>
           </div>
           <div className="signup-link">
-            Don't have an account? <span className="signup-text">Sign Up</span>
+            Don't have an account?{' '}
+            <span className="signup-text" onClick={() => navigate('/signup')}>
+              Sign Up
+            </span>
           </div>
         </form>
       </div>
