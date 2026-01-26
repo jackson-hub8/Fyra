@@ -19,7 +19,6 @@ const Home = () => {
   startOfWeek.setDate(today.getDate() - currentDay); // Go back to Sunday
 
   const weekDays = [];
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const dayNamesShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   for (let i = 0; i < 7; i++) {
