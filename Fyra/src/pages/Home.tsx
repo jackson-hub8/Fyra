@@ -12,6 +12,27 @@ const Home = () => {
     navigate('/');
   };
 
+  // Get current week (Sunday to Saturday)
+  const today = new Date();
+  const currentDay = today.getDay(); // 0 = Sunday, 6 = Saturday
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - currentDay); // Go back to Sunday
+
+  const weekDays = [];
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const dayNamesShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(startOfWeek);
+    date.setDate(startOfWeek.getDate() + i);
+    weekDays.push({
+      dayName: dayNamesShort[i],
+      dayNumber: date.getDate(),
+      date: date,
+      isToday: date.toDateString() === today.toDateString()
+    });
+  }
+
   return (
     <div className="home-page">
       <div className="home-header">
@@ -26,7 +47,31 @@ const Home = () => {
       </div>
 
       <div className="main-content">
-        <div className="calendar-placeholder">Calendar</div>
+        <div className="week-calendar">
+          <div className="week-calendar-header">
+            {weekDays.map((day) => (
+              <div
+                key={day.dayNumber}
+                className={`week-day-header ${day.isToday ? 'today' : ''}`}
+              >
+                <div className="week-day-name">{day.dayName}</div>
+                <div className={`week-day-number ${day.isToday ? 'today-number' : ''}`}>
+                  {day.dayNumber}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="week-calendar-body">
+            {weekDays.map((day) => (
+              <div
+                key={day.dayNumber}
+                className={`week-day-cell ${day.isToday ? 'today-cell' : ''}`}
+              >
+                {/* Events will go here later */}
+              </div>
+            ))}
+          </div>
+        </div>
         
         <div className="bottom-sections">
           <div className="chores-section">
@@ -44,8 +89,12 @@ const Home = () => {
       </div>
 
       <div className="bottom-nav">
-        <button className="nav-item">Home</button>
-        <button className="nav-item">Calendar</button>
+        <button className="nav-item" onClick={() => navigate('/matched')}>
+          Home
+        </button>
+        <button className="nav-item" onClick={() => navigate('/calendar')}>
+          Calendar
+        </button>
         <button className="nav-item">Profile</button>
       </div>
     </div>

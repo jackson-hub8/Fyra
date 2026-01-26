@@ -72,19 +72,78 @@
   gap: 20px;
 }
 
-.calendar-placeholder {
+.week-calendar {
   background-color: white;
   border: 2px solid #E0E0E0;
   border-radius: 12px;
-  padding: 40px;
+  overflow: hidden;
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+.week-calendar-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background-color: #f5f5f5;
+  border-bottom: 2px solid #E0E0E0;
+}
+
+.week-day-header {
+  padding: 15px 10px;
   text-align: center;
-  font-size: 24px;
+  border-right: 1px solid #E0E0E0;
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+.week-day-header:last-child {
+  border-right: none;
+}
+
+.week-day-header.today {
+  background-color: #fff5f5;
+}
+
+.week-day-name {
+  font-size: 12px;
+  font-weight: bold;
+  color: #666;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+.week-day-number {
+  font-size: 20px;
+  font-weight: 500;
   color: #333;
   font-family: Helvetica, Arial, sans-serif;
-  min-height: 300px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+}
+
+.week-day-header.today .week-day-number.today-number {
+  color: #a12d2e;
+  font-weight: bold;
+}
+
+.week-calendar-body {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  min-height: 200px;
+}
+
+.week-day-cell {
+  border-right: 1px solid #E0E0E0;
+  border-bottom: 1px solid #E0E0E0;
+  padding: 10px;
+  min-height: 200px;
+  background-color: white;
+}
+
+.week-day-cell:last-child,
+.week-day-cell:nth-child(7n) {
+  border-right: none;
+}
+
+.week-day-cell.today-cell {
+  background-color: #fff5f5;
 }
 
 .bottom-sections {

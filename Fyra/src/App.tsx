@@ -5,6 +5,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Home from './pages/Home';
+import Calendar from './pages/Calendar';
 import SignupPage1 from './pages/SignupPage1';
 import SignupPage2 from './pages/SignupPage2';
 import Unmatched from './pages/Unmatched';
@@ -18,6 +19,7 @@ const App = () => {
         <Route path="/signup" element={<SignupPage1 />} />
         <Route path="/signup/password" element={<SignupPage2 />} />
         <Route path="/matched" element={<Home />} />
+        <Route path="/calendar" element={<Calendar />} />
         <Route path="/unmatched" element={<Unmatched />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
