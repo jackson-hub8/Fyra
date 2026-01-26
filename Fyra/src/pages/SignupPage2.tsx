@@ -46,6 +46,15 @@ const SignupPage2 = () => {
 
     setIsSubmitting(true);
 
+    // Log what we're sending to the API
+    console.log('Sending signup data:', {
+      firstName: signupData.firstName,
+      lastName: signupData.lastName,
+      email: signupData.email,
+      hasPassword: !!password,
+      signupData: signupData
+    });
+
     try {
       const response = await fetch('/api/users', {
         method: 'POST',
@@ -65,8 +74,8 @@ const SignupPage2 = () => {
         throw new Error(errorData.error || 'Failed to create account');
       }
 
-      // Success - redirect to login
-      navigate('/', { state: { message: 'Account created successfully! Please login.' } });
+      // Success - redirect to unmatched screen
+      navigate('/unmatched');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
