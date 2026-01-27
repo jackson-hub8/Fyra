@@ -114,6 +114,21 @@
   opacity: 0.8;
 }
 
+.resend-link {
+  background: none;
+  border: none;
+  color: #0066cc;
+  cursor: pointer;
+  font-size: 14px;
+  text-decoration: underline;
+  font-family: inherit;
+  padding: 0;
+}
+
+.resend-link:hover {
+  opacity: 0.8;
+}
+
 .form-actions-bottom {
   display: flex;
   justify-content: space-between;
