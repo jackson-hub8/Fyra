@@ -1,7 +1,7 @@
 /// file: signupStart.ts
 /// Jackson Hurley, Kaitlyn Maes, Cam Horine
-/// Start signup: validate, store in pending_signups, send 6-digit verification email.
-/// User is not created in Users until they verify via signupVerify.
+/// send 6-digit verification email.
+/// User is not created in Users until they verify
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
@@ -58,6 +58,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'An account with this email already exists' });
     }
 
+    // Check email config before creating pending (we never create in Users here; only signupVerify does)
+    const emailUser = process.env.EMAIL_USER;
+    const emailPass = process.env.EMAIL_PASS;
+    if (!emailUser || !emailPass) {
+      return res.status(500).json({ error: 'Email is not configured. Set EMAIL_USER and EMAIL_PASS.' });
+    }
+
     const passwordHash = await argon2.hash(password);
     const verificationCode = String(randomInt(100_000, 1_000_000));
     const codeExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
@@ -82,24 +89,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     });
 
-    // Send email (same pattern as emailVerification.ts)
-    const emailUser = process.env.EMAIL_USER;
-    const emailPass = process.env.EMAIL_PASS;
-    if (!emailUser || !emailPass) {
-      return res.status(500).json({ error: 'Email is not configured. Set EMAIL_USER and EMAIL_PASS.' });
-    }
-
+    // Send email; if it fails, remove the pending we just created so the user can retry cleanly
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: { user: emailUser, pass: emailPass },
     });
 
-    await transporter.sendMail({
-      from: emailUser,
-      to: emailLower,
-      subject: 'Your FYRA verification code',
-      text: `Your verification code is: ${verificationCode}. It expires in 15 minutes.`,
-    });
+    try {
+      await transporter.sendMail({
+        from: emailUser,
+        to: emailLower,
+        subject: 'Your FYRA verification code',
+        text: `Your verification code is: ${verificationCode}. It expires in 15 minutes.`,
+      });
+    } catch (mailErr) {
+      await prisma.pendingSignups.delete({ where: { email: emailLower } }).catch(() => {});
+      throw mailErr;
+    }
 
     return res.status(200).json({ success: true });
   } catch (e: unknown) {

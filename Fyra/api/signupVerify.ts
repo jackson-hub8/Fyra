@@ -1,6 +1,6 @@
 /// file: signupVerify.ts
 /// Jackson Hurley, Kaitlyn Maes, Cam Horine
-/// Verify 6-digit code and create user. After this, redirect to /unmatched.
+/// Verify 6-digit code and create user
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
@@ -26,6 +26,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    const body = req.body as Record<string, unknown>;
+    // Reject signup payloads that were misrouted here (we only accept email + code)
+    if (body && ('password' in body || 'firstName' in body)) {
+      return res.status(400).json({ error: 'Invalid request. Use the verification step.' });
+    }
+
     const { email, code } = req.body as { email?: string; code?: string };
 
     if (!email?.trim() || !code?.trim()) {

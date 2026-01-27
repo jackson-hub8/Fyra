@@ -76,6 +76,7 @@ const SignupPage2 = () => {
       if (!response.ok) {
         throw new Error(data.error || 'Failed to send verification code');
       }
+      // On success: show verify step only. Never create Users or navigate to /unmatched from here.
       setStep('verify');
       setCode('');
       setResendCooldownUntil(Date.now() + 60 * 1000);
@@ -108,6 +109,7 @@ const SignupPage2 = () => {
       if (!response.ok) {
         throw new Error(data.error || 'Verification failed');
       }
+      // Only place we navigate to /unmatched: after successful signupVerify with valid 6-digit code.
       navigate('/unmatched');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -185,7 +187,11 @@ const SignupPage2 = () => {
               <button type="button" onClick={handleBack} className="back-button">
                 Back
               </button>
-              <button type="submit" className="submit-button" disabled={isSubmitting}>
+              <button
+                type="submit"
+                className="submit-button"
+                disabled={isSubmitting || code.replace(/\D/g, '').length !== 6}
+              >
                 {isSubmitting ? 'Verifying...' : 'Verify'}
               </button>
             </div>
