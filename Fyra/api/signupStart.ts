@@ -67,7 +67,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const passwordHash = await argon2.hash(password);
     const verificationCode = String(randomInt(100_000, 1_000_000));
-    const codeExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    const codeExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     // Upsert: replace any existing pending signup for this email
     await prisma.pendingSignups.upsert({
@@ -100,7 +100,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         from: emailUser,
         to: emailLower,
         subject: 'Your FYRA verification code',
-        text: `Your verification code is: ${verificationCode}. It expires in 15 minutes.`,
+        text: `Your verification code is: ${verificationCode}. It expires in 10 minutes.`,
+        html: `<p>Your verification code is: <strong>${verificationCode}</strong>. It expires in 10 minutes.</p>`,
       });
     } catch (mailErr) {
       await prisma.pendingSignups.delete({ where: { email: emailLower } }).catch(() => {});
