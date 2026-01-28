@@ -151,6 +151,7 @@ const SignupPage2 = () => {
     return null;
   }
 
+  // verify step
   if (step === 'verify') {
     const secondsLeft = Math.max(0, Math.ceil((resendCooldownUntil - Date.now()) / 1000));
     return (
