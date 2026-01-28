@@ -97,10 +97,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     try {
       await transporter.sendMail({
+        // send email
         from: emailUser,
         to: emailLower,
         subject: 'Your FYRA verification code',
-        text: `Your verification code is: 
+        text: `Your verification code is:
 
         ${verificationCode} 
         
