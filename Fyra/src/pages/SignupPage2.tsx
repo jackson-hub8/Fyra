@@ -109,8 +109,8 @@ const SignupPage2 = () => {
       if (!response.ok) {
         throw new Error(data.error || 'Verification failed');
       }
-      // Only place we navigate to /unmatched: after successful signupVerify with valid 6-digit code.
-      navigate('/unmatched');
+      // After successful email verification, show Terms & Conditions.
+      navigate('/terms', { state: { email: signupData.email } });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {

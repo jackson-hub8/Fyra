@@ -61,20 +61,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Invalid verification code' });
     }
 
-    const name = `${pending.firstName} ${pending.lastName}`.trim() || pending.email;
-
-    await prisma.users.create({
-      data: {
-        email: emailLower,
-        name,
-        passwordHash: pending.passwordHash,
-        emailVerified: true,
-        isMatched: false,
-      },
-    });
-
-    await prisma.pendingSignups.delete({ where: { email: emailLower } });
-
     return res.status(200).json({ success: true });
   } catch (e: unknown) {
     console.error('signupVerify error:', e);

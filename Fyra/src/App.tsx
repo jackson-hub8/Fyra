@@ -9,6 +9,7 @@ import Calendar from './pages/Calendar';
 import SignupPage1 from './pages/SignupPage1';
 import SignupPage2 from './pages/SignupPage2';
 import Unmatched from './pages/Unmatched';
+import Terms from './pages/Terms';
 
 const App = () => {
   return (
@@ -18,6 +19,7 @@ const App = () => {
         <Route path="/home" element={<Home />} />
         <Route path="/signup" element={<SignupPage1 />} />
         <Route path="/signup/password" element={<SignupPage2 />} />
+        <Route path="/terms" element={<Terms />} />
         <Route path="/matched" element={<Home />} />
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/unmatched" element={<Unmatched />} />
