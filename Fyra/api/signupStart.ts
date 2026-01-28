@@ -100,12 +100,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         from: emailUser,
         to: emailLower,
         subject: 'Your FYRA verification code',
-        text: `Your verification code is: 
-
-        ${verificationCode} 
-        
-        It expires in 10 minutes.`,
-        html: `<p>Your verification code is: <strong>${verificationCode}</strong>. It expires in 10 minutes.</p>`,
+        html: `<p>Your verification code is: </p> 
+               <p><strong>${verificationCode}</strong></p>
+               <p>It expires in 10 minutes.</p>`,
       });
     } catch (mailErr) {
       await prisma.pendingSignups.delete({ where: { email: emailLower } }).catch(() => {});
