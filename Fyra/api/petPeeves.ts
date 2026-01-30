@@ -1,6 +1,6 @@
-/// file: petPeeves.ts
-/// Jackson Hurley, Kaitlyn Maes, Cam Horine
-/// API endpoint for pet peeves operations
+/// File: petPeeves.ts
+/// Jackson Hurley, Kaitlyn Maes, Cameron Horine
+/// API endpoint for pet peeves operations (placeholder). 
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 

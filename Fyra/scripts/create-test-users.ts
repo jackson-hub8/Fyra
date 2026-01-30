@@ -1,6 +1,6 @@
 /// file: create-test-users.ts
-/// Jackson Hurley, Kaitlyn Maes, Cam Horine
-/// Script to create two test users - one matched, one unmatched
+/// Jackson Hurley, Kaitlyn Maes, Cameron Horine
+/// Script to create two test users -- one matched, one unmatched
 
 import { PrismaClient } from '@prisma/client';
 import argon2 from 'argon2';

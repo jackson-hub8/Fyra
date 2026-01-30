@@ -1,6 +1,6 @@
-/// file: profiles.ts
-/// Jackson Hurley, Kaitlyn Maes, Cam Horine
-/// API endpoint for user profile operations
+/// File: profiles.ts
+/// Jackson Hurley, Kaitlyn Maes, Cameron Horine
+/// API endpoint for user profile operations (placeholder). 
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 

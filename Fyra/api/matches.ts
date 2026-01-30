@@ -1,6 +1,6 @@
-/// file: matches.ts
-/// Jackson Hurley, Kaitlyn Maes, Cam Horine
-/// API endpoint for matches operations
+/// File: matches.ts
+/// Jackson Hurley, Kaitlyn Maes, Cameron Horine
+/// Temporary API endpoint for matches operations (placeholder). 
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 

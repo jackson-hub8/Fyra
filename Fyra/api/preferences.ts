@@ -1,6 +1,6 @@
-/// file: preferences.ts
-/// Jackson Hurley, Kaitlyn Maes, Cam Horine
-/// API endpoint for user preferences operations
+/// File: preferences.ts
+/// Jackson Hurley, Kaitlyn Maes, Cameron Horine
+/// API endpoint for user preferences operations (placeholder). 
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 

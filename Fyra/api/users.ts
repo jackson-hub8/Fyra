@@ -1,25 +1,28 @@
-/// file: users.ts
-/// Jackson Hurley, Kaitlyn Maes, Cam Horine
+/// File: users.ts
+/// Jackson Hurley, Kaitlyn Maes, Cameron Horine
 /// API endpoint for user management operations
+/// Ref 1: https://vercel.com/kb/guide/how-to-enable-cors
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
-import argon2 from 'argon2';
+import argon2 from 'argon2'; // For password hashing and salting.  
 
 const prisma = new PrismaClient();
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Handle CORS
+  // Set CORS headers to allow requests from all origins. (Ref 1). 
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
+  // Handle CORS preflight requests.
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
 
+  // Only handles POST (signup or login); other methods get 405 below.
   if (req.method === 'POST') {
     try {
       const { email, password, firstName, lastName } = req.body;
@@ -30,29 +33,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'Email and password are required' });
       }
 
-      // Check if this is a signup request (has firstName and lastName)
-      // Use explicit check for signup vs login
+      // Signup vs. login: signup includes non-empty firstName and lastName. 
       const isSignup = firstName !== undefined && lastName !== undefined && firstName !== '' && lastName !== '';
       
       console.log('Is signup?', isSignup);
       
       if (isSignup) {
-        // Signup flow
+        // Signup flow.  
         const normalizedEmail = email.toLowerCase();
 
-        // Check if user already exists
+        // Reject if an account already exists with this email. 
         const existingUser = await prisma.users.findUnique({
           where: { email: normalizedEmail },
         });
 
         if (existingUser) {
-          return res.status(400).json({ error: 'User with this email already exists' });
+          return res.status(400).json({ error: 'User with this email already exists' }); // Reject new user.
         }
 
-        // Hash the password
+        // Hash and salt password. 
         const passwordHash = await argon2.hash(password);
 
-        // Create the user
+        // Create the new user. 
         const fullName = `${firstName.trim()} ${lastName.trim()}`;
         
         try {
@@ -67,7 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             },
           });
 
-          // Return success response
+          // Return success response. 
           return res.status(201).json({
             email: newUser.email,
             name: newUser.name,
@@ -75,14 +77,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           });
         } catch (dbError: any) {
           console.error('Database error during signup:', dbError);
-          // Handle unique constraint violation (duplicate email)
+          // Handle unique constraint violation (duplicate email). 
           if (dbError.code === 'P2002') {
             return res.status(400).json({ error: 'User with this email already exists' });
           }
           throw dbError;
         }
       } else {
-        // Login flow
+        // Login flow.
         const user = await prisma.users.findUnique({
           where: { email: email.toLowerCase() },
         });
@@ -91,14 +93,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        // Verify password
+        // Verify that the password hashes match. 
         const isValidPassword = await argon2.verify(user.passwordHash, password);
 
         if (!isValidPassword) {
           return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        // Return user info including isMatched
+        // Return user info including if they are matched or not.
         return res.status(200).json({
           email: user.email,
           name: user.name,
@@ -112,5 +114,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
+  // Only POST is supported; GET, PATCH, etc. are met with 405 error. 
   res.status(405).json({ error: 'Method not allowed' });
 }
