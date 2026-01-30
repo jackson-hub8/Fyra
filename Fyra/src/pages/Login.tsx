@@ -4,6 +4,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './login.css';
 
 const Login = () => {
@@ -12,6 +13,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { setUser } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,7 +66,15 @@ const Login = () => {
         throw new Error('Failed to parse server response');
       }
 
-      if (userData.isMatched) {
+      setUser({
+        email: userData.email,
+        name: userData.name,
+        isMatched: userData.isMatched,
+        profileSetupComplete: userData.profileSetupComplete,
+      });
+      if (!userData.profileSetupComplete) {
+        navigate('/profile-setup');
+      } else if (userData.isMatched) {
         navigate('/matched');
       } else {
         navigate('/unmatched');

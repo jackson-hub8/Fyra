@@ -98,11 +98,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        // Return user info including isMatched
+        // Return user info including isMatched and profileSetupComplete
         return res.status(200).json({
           email: user.email,
           name: user.name,
           isMatched: user.isMatched,
+          profileSetupComplete: user.profileSetupComplete,
         });
       }
     } catch (error: any) {

@@ -12,21 +12,23 @@ datasource db {
 }
 
 model Users {
-  email         String   @id @db.VarChar(255)
-  name          String   @db.VarChar(255)
-  passwordHash  String   @db.VarChar(255) // Salted hash stored here
-  isMatched     Boolean  @default(false)
-  isActive      Boolean  @default(true)
-  emailVerified Boolean  @default(false)
-  createdAt     DateTime @default(now()) @db.Timestamp(6)
+  email                String   @id @db.VarChar(255)
+  name                 String   @db.VarChar(255)
+  passwordHash         String   @db.VarChar(255) // Salted hash stored here
+  isMatched            Boolean  @default(false)
+  isActive             Boolean  @default(true)
+  emailVerified        Boolean  @default(false)
+  profileSetupComplete Boolean  @default(false)
+  createdAt            DateTime @default(now()) @db.Timestamp(6)
 
   // Relations
-  userProfile        UserProfiles?
-  publicPreferences  PublicPreferences?
-  privatePreferences PrivatePreferences?
-  petPeeves          PetPeeves[]
-  matchesAsUser1     Matches[] @relation("User1Matches")
-  matchesAsUser2     Matches[] @relation("User2Matches")
+  userProfile          UserProfiles?
+  publicPreferences    PublicPreferences?
+  privatePreferences   PrivatePreferences?
+  privateQuestionnaire PrivateQuestionnaire?
+  petPeeves            PetPeeves[]
+  matchesAsUser1       Matches[] @relation("User1Matches")
+  matchesAsUser2       Matches[] @relation("User2Matches")
 
   @@map("users")
 }
@@ -41,6 +43,8 @@ model UserProfiles {
   gender               String?   @db.VarChar(50)
   pronouns             String?   @db.VarChar(50)
   dietaryRestrictions  String?   @db.VarChar(255)
+  topInterests         String?   @db.Text
+  dailyLife            String?   @db.Text
   createdAt            DateTime  @default(now()) @db.Timestamp(6)
 
   // Relations
@@ -77,6 +81,38 @@ model PrivatePreferences {
   user Users @relation(fields: [userEmail], references: [email], onDelete: Cascade)
 
   @@map("private_preferences")
+}
+
+model PrivateQuestionnaire {
+  id                    Int      @id @default(autoincrement())
+  userEmail             String   @unique @db.VarChar(255)
+  gender                String?  @db.VarChar(100)
+  adaAccommodations     String?  @db.VarChar(50)
+  cellPhoneProvider     String?  @db.VarChar(100)
+  cellPhoneNumber       String?  @db.VarChar(20)
+  animalAllergies       String?  @db.Text
+  varsitySport          String?  @db.VarChar(100)
+  smoking               String?  @db.VarChar(50)
+  alcohol               String?  @db.VarChar(50)
+  roomTemp              String?  @db.VarChar(50)
+  bedroomDescription    String?  @db.Text
+  sleepType             String?  @db.VarChar(100)
+  weekdayBedtime        String?  @db.VarChar(50)
+  freeTime              String?  @db.Text
+  campusActivity        String?  @db.VarChar(100)
+  visitorFrequency      String?  @db.VarChar(50)
+  weekendHomeFrequency  String?  @db.VarChar(50)
+  firstClassTime        String?  @db.VarChar(50)
+  musicPreference       String?  @db.VarChar(100)
+  politicalViews        String?  @db.VarChar(100)
+  religion              String?  @db.VarChar(100)
+  studyEnvironment      String?  @db.VarChar(100)
+  intendedMajor         String?  @db.VarChar(100)
+  vehicleToCampus       String?  @db.VarChar(50)
+
+  user Users @relation(fields: [userEmail], references: [email], onDelete: Cascade)
+
+  @@map("private_questionnaire")
 }
 
 model PetPeeves {
