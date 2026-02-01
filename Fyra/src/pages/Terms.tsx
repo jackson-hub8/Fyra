@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './login.css';
 
 interface TermsLocationState {
@@ -14,6 +15,7 @@ interface TermsLocationState {
 const Terms = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { setUser } = useAuth();
   const state = location.state as TermsLocationState | null;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,7 +49,10 @@ const Terms = () => {
       if (!accept) {
         navigate('/');
       } else {
-        navigate('/unmatched');
+        const email = (data.email ?? state.email) as string;
+        const name = (data.name ?? email) as string;
+        setUser({ email, name, profileSetupComplete: false });
+        navigate('/profile-setup');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');

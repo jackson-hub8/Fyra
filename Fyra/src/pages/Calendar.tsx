@@ -2,18 +2,30 @@
 /// Jackson Hurley, Kaitlyn Maes, Cam Horine
 /// Calendar page for matched users(not done yet)
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './home.css';
 import './calendar.css';
 
 const Calendar = () => {
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
 
+  useEffect(() => {
+    if (!user?.email) {
+      navigate('/');
+      return;
+    }
+  }, [user, navigate]);
+
   const handleSignOut = () => {
+    signOut();
     navigate('/');
   };
+
+  if (!user?.email) return null;
 
   const handlePreviousMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
@@ -119,7 +131,9 @@ const Calendar = () => {
         <button className="nav-item" onClick={() => navigate('/calendar')}>
           Calendar
         </button>
-        <button className="nav-item">Profile</button>
+        <button className="nav-item" onClick={() => navigate('/profile')}>
+          Profile
+        </button>
       </div>
     </div>
   );

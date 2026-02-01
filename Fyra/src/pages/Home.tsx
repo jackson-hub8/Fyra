@@ -2,15 +2,28 @@
 /// Jackson Hurley, Kaitlyn Maes, Cam Horine
 /// Home page for matched users
 
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './home.css';
 
 const Home = () => {
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+
+  useEffect(() => {
+    if (!user?.email) {
+      navigate('/');
+      return;
+    }
+  }, [user, navigate]);
 
   const handleSignOut = () => {
+    signOut();
     navigate('/');
   };
+
+  if (!user?.email) return null;
 
   // Get current week (Sunday to Saturday)
   const today = new Date();
@@ -94,7 +107,9 @@ const Home = () => {
         <button className="nav-item" onClick={() => navigate('/calendar')}>
           Calendar
         </button>
-        <button className="nav-item">Profile</button>
+        <button className="nav-item" onClick={() => navigate('/profile')}>
+          Profile
+        </button>
       </div>
     </div>
   );

@@ -79,14 +79,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
     if (existingUser) {
       await prisma.pendingSignups.delete({ where: { email: emailLower } }).catch(() => {});
-      return res.status(200).json({ success: true, alreadyExists: true });
+      return res.status(200).json({ success: true, alreadyExists: true, name: existingUser.name, email: existingUser.email });
     }
 
     // Display name from signup form, or fall back to email. 
     const name = `${pending.firstName} ${pending.lastName}`.trim() || pending.email;
 
-    // Create the verified user record in the database. 
-    await prisma.users.create({
+    const user = await prisma.users.create({
       data: {
         email: emailLower,
         name,
@@ -99,7 +98,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Delete the pending signup record (no reuse possible). 
     await prisma.pendingSignups.delete({ where: { email: emailLower } }).catch(() => {});
 
-    return res.status(200).json({ success: true });
+    return res.status(200).json({ success: true, name: user.name, email: user.email });
   } catch (e: unknown) {
     console.error('signupComplete error:', e);
     const msg = e instanceof Error ? e.message : 'Internal server error';
