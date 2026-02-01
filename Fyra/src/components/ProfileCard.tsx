@@ -23,8 +23,10 @@ export default function ProfileCard({ email }: { email: string }) {
   const [error, setError] = useState('');
   const [editing, setEditing] = useState(false);
   const [editBio, setEditBio] = useState('');
-  const [editInterests, setEditInterests] = useState('');
-  const [editDailyLife, setEditDailyLife] = useState('');
+  const [editInterests, setEditInterests] = useState<string[]>([]);
+  const [editDailyLife, setEditDailyLife] = useState<string[]>([]);
+  const [topInterestsInput, setTopInterestsInput] = useState('');
+  const [dailyLifeInput, setDailyLifeInput] = useState('');
   const [editPetPeeves, setEditPetPeeves] = useState<string[]>([]);
   const [petPeeveInput, setPetPeeveInput] = useState('');
   const [saving, setSaving] = useState(false);
@@ -44,8 +46,8 @@ export default function ProfileCard({ email }: { email: string }) {
       setProfile(p);
       setPetPeeves(pp);
       setEditBio(p.bio ?? '');
-      setEditInterests(p.topInterests ?? '');
-      setEditDailyLife(p.dailyLife ?? '');
+      setEditInterests((p.topInterests ?? '').split(/[\n,]+/).map((s) => s.trim()).filter(Boolean));
+      setEditDailyLife((p.dailyLife ?? '').split(/[\n,]+/).map((s) => s.trim()).filter(Boolean));
       setEditPetPeeves(pp.map((x) => x.petPeeve));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load profile');
@@ -58,6 +60,28 @@ export default function ProfileCard({ email }: { email: string }) {
     if (!email) return;
     fetchProfile();
   }, [email, fetchProfile]);
+
+  const addTopInterest = () => {
+    const v = topInterestsInput.trim();
+    if (!v || editInterests.includes(v)) return;
+    setEditInterests((prev) => [...prev, v]);
+    setTopInterestsInput('');
+  };
+
+  const removeTopInterest = (idx: number) => {
+    setEditInterests((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const addDailyLifeItem = () => {
+    const v = dailyLifeInput.trim();
+    if (!v || editDailyLife.includes(v)) return;
+    setEditDailyLife((prev) => [...prev, v]);
+    setDailyLifeInput('');
+  };
+
+  const removeDailyLifeItem = (idx: number) => {
+    setEditDailyLife((prev) => prev.filter((_, i) => i !== idx));
+  };
 
   const addPetPeeve = () => {
     const v = petPeeveInput.trim();
@@ -75,8 +99,8 @@ export default function ProfileCard({ email }: { email: string }) {
     setError('');
     setSaving(true);
     try {
-      const interests = editInterests.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean);
-      const daily = editDailyLife.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean);
+      const interests = editInterests;
+      const daily = editDailyLife;
       const pRes = await fetch('/api/profiles', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -116,8 +140,10 @@ export default function ProfileCard({ email }: { email: string }) {
 
   const cancelEdit = () => {
     setEditBio(profile?.bio ?? '');
-    setEditInterests(profile?.topInterests ?? '');
-    setEditDailyLife(profile?.dailyLife ?? '');
+    setEditInterests((profile?.topInterests ?? '').split(/[\n,]+/).map((s) => s.trim()).filter(Boolean));
+    setEditDailyLife((profile?.dailyLife ?? '').split(/[\n,]+/).map((s) => s.trim()).filter(Boolean));
+    setTopInterestsInput('');
+    setDailyLifeInput('');
     setEditPetPeeves(petPeeves.map((x) => x.petPeeve));
     setPetPeeveInput('');
     setEditing(false);
@@ -160,22 +186,54 @@ export default function ProfileCard({ email }: { email: string }) {
             {editing ? (
               <>
                 <div className="profile-edit-form">
-                  <label>Top interests (comma or line separated)</label>
-                  <textarea
-                    value={editInterests}
-                    onChange={(e) => setEditInterests(e.target.value)}
-                    placeholder="e.g. Football, Cooking, Reading"
-                    rows={2}
-                  />
+                  <label>Top interests</label>
+                  <div className="profile-petpeeve-list">
+                    {editInterests.map((item, i) => (
+                      <span key={i} className="profile-petpeeve-tag">
+                        {item}
+                        <button type="button" onClick={() => removeTopInterest(i)} aria-label={`Remove ${item}`}>
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="profile-petpeeve-add">
+                    <input
+                      type="text"
+                      value={topInterestsInput}
+                      onChange={(e) => setTopInterestsInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTopInterest())}
+                      placeholder="Add one..."
+                    />
+                    <button type="button" className="btn-add-pp" onClick={addTopInterest}>
+                      Add
+                    </button>
+                  </div>
                 </div>
                 <div className="profile-edit-form">
-                  <label>Daily life (comma or line separated)</label>
-                  <textarea
-                    value={editDailyLife}
-                    onChange={(e) => setEditDailyLife(e.target.value)}
-                    placeholder="e.g. Early Bird, Study at the library"
-                    rows={2}
-                  />
+                  <label>Daily life</label>
+                  <div className="profile-petpeeve-list">
+                    {editDailyLife.map((item, i) => (
+                      <span key={i} className="profile-petpeeve-tag">
+                        {item}
+                        <button type="button" onClick={() => removeDailyLifeItem(i)} aria-label={`Remove ${item}`}>
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="profile-petpeeve-add">
+                    <input
+                      type="text"
+                      value={dailyLifeInput}
+                      onChange={(e) => setDailyLifeInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addDailyLifeItem())}
+                      placeholder="Add one..."
+                    />
+                    <button type="button" className="btn-add-pp" onClick={addDailyLifeItem}>
+                      Add
+                    </button>
+                  </div>
                 </div>
                 <div className="profile-edit-form">
                   <label>Roommate pet peeves</label>
@@ -225,7 +283,7 @@ export default function ProfileCard({ email }: { email: string }) {
                     </button>
                   </div>
                   <ul>
-                    {(profile.topInterests ?? '').split(/[,]+/).map((s) => s.trim()).filter(Boolean).map((item, i) => (
+                    {(profile.topInterests ?? '').split(/[\n,]+/).map((s) => s.trim()).filter(Boolean).map((item, i) => (
                       <li key={i}>{item}</li>
                     ))}
                     {!profile.topInterests?.trim() && <li className="profile-empty">None added yet.</li>}
@@ -233,7 +291,7 @@ export default function ProfileCard({ email }: { email: string }) {
                 </div>
                 <h3>Daily life</h3>
                 <ul>
-                  {(profile.dailyLife ?? '').split(/[,]+/).map((s) => s.trim()).filter(Boolean).map((item, i) => (
+                  {(profile.dailyLife ?? '').split(/[\n,]+/).map((s) => s.trim()).filter(Boolean).map((item, i) => (
                     <li key={i}>{item}</li>
                   ))}
                   {!profile.dailyLife?.trim() && <li className="profile-empty">None added yet.</li>}
