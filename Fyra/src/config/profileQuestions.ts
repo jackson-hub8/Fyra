@@ -14,8 +14,6 @@ export type QuestionDef = {
 export type PrivateQuestionnairePayload = {
   gender: string;
   adaAccommodations: string;
-  cellPhoneProvider: string;
-  cellPhoneNumber: string;
   animalAllergies: string;
   varsitySport: string;
   smoking: string;
@@ -66,23 +64,8 @@ export const PROFILE_QUESTIONS: QuestionDef[][] = [
       ],
     },
     {
-      id: 'cellPhoneProvider',
-      label: 'What is the name of your cell phone provider? *',
-      required: true,
-      type: 'text',
-      placeholder: 'e.g. Verizon, AT&T, T-Mobile',
-    },
-    {
-      id: 'cellPhoneNumber',
-      label: 'Enter your cell phone number in the following format: XXX-XXX-XXXX. *',
-      required: true,
-      type: 'tel',
-      placeholder: 'XXX-XXX-XXXX',
-    },
-    {
       id: 'animalAllergies',
-      label:
-        'Please indicate if you have any allergies (and/or fears), in regards to the following animals: *',
+      label: 'Please indicate if you have any allergies: *',
       required: true,
       type: 'textarea',
       placeholder: 'e.g. cats, dogs, none',
@@ -180,7 +163,7 @@ export const PROFILE_QUESTIONS: QuestionDef[][] = [
   [
     {
       id: 'freeTime',
-      label: 'From these options, how would you prefer to spend your free time? *',
+      label: 'How would you prefer to spend your free time? *',
       required: true,
       type: 'textarea',
       placeholder: 'e.g. Reading, Cooking, Football, History',
@@ -232,7 +215,6 @@ export const PROFILE_QUESTIONS: QuestionDef[][] = [
       type: 'select',
       options: [
         { value: '', label: 'Select...' },
-        { value: 'Before 8am', label: 'Before 8am' },
         { value: '8am–9am', label: '8am–9am' },
         { value: '9am–10am', label: '9am–10am' },
         { value: '10am–11am', label: '10am–11am' },

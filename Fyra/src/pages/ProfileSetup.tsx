@@ -10,13 +10,6 @@ import './login.css';
 
 const TOTAL_QUESTION_PAGES = PROFILE_QUESTIONS.length;
 
-function formatPhone(val: string) {
-  const d = val.replace(/\D/g, '').slice(0, 10);
-  if (d.length <= 3) return d;
-  if (d.length <= 6) return `${d.slice(0, 3)}-${d.slice(3)}`;
-  return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`;
-}
-
 export default function ProfileSetup() {
   const { user, setUser } = useAuth();
   const navigate = useNavigate();
@@ -24,9 +17,12 @@ export default function ProfileSetup() {
   const [buildProfile, setBuildProfile] = useState(false);
   const [form, setForm] = useState<Record<string, string>>({});
   const [bio, setBio] = useState('');
-  const [topInterests, setTopInterests] = useState('');
-  const [dailyLife, setDailyLife] = useState('');
+  const [topInterests, setTopInterests] = useState<string[]>([]);
+  const [topInterestsInput, setTopInterestsInput] = useState('');
+  const [dailyLife, setDailyLife] = useState<string[]>([]);
+  const [dailyLifeInput, setDailyLifeInput] = useState('');
   const [petPeeves, setPetPeeves] = useState<string[]>([]);
+  const [adaAccommodationsDetails, setAdaAccommodationsDetails] = useState('');
   const [petPeeveInput, setPetPeeveInput] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,13 +50,30 @@ export default function ProfileSetup() {
         setError(`Please answer: ${q.label.replace(/\s*\*$/, '')}`);
         return false;
       }
-      if (q.id === 'cellPhoneNumber') {
-        const digits = v.replace(/\D/g, '');
-        if (digits.length !== 10) {
-          setError('Enter a valid 10-digit phone number (XXX-XXX-XXXX).');
-          return false;
-        }
+      if (q.id === 'adaAccommodations' && v === 'Yes' && !adaAccommodationsDetails.trim()) {
+        setError('Please specify your accommodations.');
+        return false;
       }
+    }
+    return true;
+  };
+
+  const validateBuildProfile = () => {
+    if (!bio.trim()) {
+      setError('Please provide a bio.');
+      return false;
+    }
+    if (topInterests.length === 0) {
+      setError('Please add at least one top interest.');
+      return false;
+    }
+    if (dailyLife.length === 0) {
+      setError('Please add at least one daily life item.');
+      return false;
+    }
+    if (petPeeves.length === 0) {
+      setError('Please add at least one roommate pet peeve.');
+      return false;
     }
     return true;
   };
@@ -76,7 +89,8 @@ export default function ProfileSetup() {
       setPage((p) => p + 1);
       return;
     }
-    // Build profile page: submit all
+    // Build profile page: validate then submit
+    if (!validateBuildProfile()) return;
     handleSubmit();
   };
 
@@ -89,6 +103,28 @@ export default function ProfileSetup() {
     }
     if (page > 0) setPage((p) => p - 1);
     else navigate('/');
+  };
+
+  const addTopInterest = () => {
+    const v = topInterestsInput.trim();
+    if (!v || topInterests.includes(v)) return;
+    setTopInterests((prev) => [...prev, v]);
+    setTopInterestsInput('');
+  };
+
+  const removeTopInterest = (idx: number) => {
+    setTopInterests((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const addDailyLifeItem = () => {
+    const v = dailyLifeInput.trim();
+    if (!v || dailyLife.includes(v)) return;
+    setDailyLife((prev) => [...prev, v]);
+    setDailyLifeInput('');
+  };
+
+  const removeDailyLifeItem = (idx: number) => {
+    setDailyLife((prev) => prev.filter((_, i) => i !== idx));
   };
 
   const addPetPeeve = () => {
@@ -110,7 +146,10 @@ export default function ProfileSetup() {
       const payload: Record<string, string> = { email: user.email };
       for (const group of PROFILE_QUESTIONS) {
         for (const q of group) {
-          const v = (form[q.id] ?? '').trim();
+          let v = (form[q.id] ?? '').trim();
+          if (q.id === 'adaAccommodations' && v === 'Yes') {
+            v = adaAccommodationsDetails.trim() || 'Yes';
+          }
           if (v) payload[q.id] = v;
         }
       }
@@ -124,8 +163,8 @@ export default function ProfileSetup() {
         throw new Error(d.error || 'Failed to save questionnaire');
       }
 
-      const interests = topInterests.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean);
-      const daily = dailyLife.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean);
+      const interests = topInterests;
+      const daily = dailyLife;
       const pRes = await fetch('/api/profiles', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -181,7 +220,7 @@ export default function ProfileSetup() {
 
         {buildProfile ? (
           <div className="account-form">
-            <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Bio</label>
+            <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Bio *</label>
             <textarea
               className="password-input"
               placeholder="A short intro, e.g. major, hometown, interests..."
@@ -190,25 +229,55 @@ export default function ProfileSetup() {
               rows={4}
               style={{ resize: 'vertical', minHeight: 80 }}
             />
-            <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Top interests (comma or line separated)</label>
-            <textarea
-              className="password-input"
-              placeholder="e.g. Football, Cooking, Reading, History"
-              value={topInterests}
-              onChange={(e) => setTopInterests(e.target.value)}
-              rows={2}
-              style={{ resize: 'vertical' }}
-            />
-            <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Daily life (comma or line separated)</label>
-            <textarea
-              className="password-input"
-              placeholder="e.g. Disorganized but not messy, Early Bird, Study at the library"
-              value={dailyLife}
-              onChange={(e) => setDailyLife(e.target.value)}
-              rows={2}
-              style={{ resize: 'vertical' }}
-            />
-            <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Roommate pet peeves</label>
+            <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Top interests *</label>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+              <input
+                type="text"
+                className="password-input"
+                placeholder="e.g. Football, Cooking, Reading"
+                value={topInterestsInput}
+                onChange={(e) => setTopInterestsInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTopInterest())}
+              />
+              <button type="button" className="submit-button" onClick={addTopInterest}>
+                Add
+              </button>
+            </div>
+            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 16px 0' }}>
+              {topInterests.map((item, i) => (
+                <li key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                  <span>{item}</span>
+                  <button type="button" className="back-button" onClick={() => removeTopInterest(i)}>
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Daily life *</label>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+              <input
+                type="text"
+                className="password-input"
+                placeholder="e.g. Disorganized but not messy, Early Bird"
+                value={dailyLifeInput}
+                onChange={(e) => setDailyLifeInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addDailyLifeItem())}
+              />
+              <button type="button" className="submit-button" onClick={addDailyLifeItem}>
+                Add
+              </button>
+            </div>
+            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 16px 0' }}>
+              {dailyLife.map((item, i) => (
+                <li key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                  <span>{item}</span>
+                  <button type="button" className="back-button" onClick={() => removeDailyLifeItem(i)}>
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Roommate pet peeves *</label>
             <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
               <input
                 type="text"
@@ -239,17 +308,33 @@ export default function ProfileSetup() {
               <div key={q.id} style={{ marginBottom: 16 }}>
                 <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>{q.label}</label>
                 {q.type === 'select' && (
-                  <select
-                    className="password-input"
-                    value={form[q.id] ?? ''}
-                    onChange={(e) => updateForm(q.id, e.target.value)}
-                  >
-                    {(q.options ?? []).map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
+                  <>
+                    <select
+                      className="password-input"
+                      value={form[q.id] ?? ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        updateForm(q.id, val);
+                        if (q.id === 'adaAccommodations' && val === 'No') setAdaAccommodationsDetails('');
+                      }}
+                    >
+                      {(q.options ?? []).map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                    {q.id === 'adaAccommodations' && (form[q.id] ?? '') === 'Yes' && (
+                      <textarea
+                        className="password-input"
+                        placeholder="Please specify your accommodations..."
+                        value={adaAccommodationsDetails}
+                        onChange={(e) => setAdaAccommodationsDetails(e.target.value)}
+                        rows={3}
+                        style={{ resize: 'vertical', marginTop: 8, display: 'block' }}
+                      />
+                    )}
+                  </>
                 )}
                 {q.type === 'text' && (
                   <input
