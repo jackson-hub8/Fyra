@@ -345,15 +345,6 @@ export default function ProfileSetup() {
                     onChange={(e) => updateForm(q.id, e.target.value)}
                   />
                 )}
-                {q.type === 'tel' && (
-                  <input
-                    type="tel"
-                    className="password-input"
-                    placeholder={q.placeholder ?? 'XXX-XXX-XXXX'}
-                    value={form[q.id] ?? ''}
-                    onChange={(e) => updateForm(q.id, formatPhone(e.target.value))}
-                  />
-                )}
                 {q.type === 'textarea' && (
                   <textarea
                     className="password-input"
