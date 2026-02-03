@@ -32,13 +32,8 @@ export default function Profile() {
         <div className="logo-left">FYRA</div>
         <div className="page-title">Profile</div>
         <div className="header-right">
-          <span className="university-text">Transylvania University</span>
-          <button
-            type="button"
-            className="profile-edit-icon"
-            onClick={handleSignOut}
-            style={{ fontWeight: 'bold', fontSize: 14, background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontFamily: 'inherit' }}
-          >
+          <div className="university-text">Transylvania University</div>
+          <button type="button" className="sign-out-button" onClick={handleSignOut}>
             Sign Out
           </button>
         </div>
