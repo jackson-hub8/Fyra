@@ -37,7 +37,7 @@ export default function Profile() {
             type="button"
             className="profile-edit-icon"
             onClick={handleSignOut}
-            style={{ textDecoration: 'underline', fontSize: 14, background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontFamily: 'inherit' }}
+            style={{ fontWeight: 'bold', fontSize: 14, background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontFamily: 'inherit' }}
           >
             Sign Out
           </button>

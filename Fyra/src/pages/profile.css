@@ -252,7 +252,7 @@
 .profile-bottom-nav .nav-item:hover,
 .profile-bottom-nav .nav-item.active {
   opacity: 0.9;
-  text-decoration: underline;
+  font-weight: bold;
 }
 
 .profile-error {
