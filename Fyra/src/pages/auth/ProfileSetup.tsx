@@ -4,8 +4,8 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { PROFILE_QUESTIONS } from '../config/profileQuestions';
+import { useAuth } from '../../context/AuthContext';
+import { PROFILE_QUESTIONS } from '../../config/profileQuestions';
 import './login.css';
 
 const TOTAL_QUESTION_PAGES = PROFILE_QUESTIONS.length;
@@ -153,7 +153,7 @@ export default function ProfileSetup() {
           if (v) payload[q.id] = v;
         }
       }
-      const qRes = await fetch('/api/privateQuestionnaire', {
+      const qRes = await fetch('/api/profiles/privateQuestionnaire', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -165,7 +165,7 @@ export default function ProfileSetup() {
 
       const interests = topInterests;
       const daily = dailyLife;
-      const pRes = await fetch('/api/profiles', {
+      const pRes = await fetch('/api/profiles/profiles', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -181,7 +181,7 @@ export default function ProfileSetup() {
       }
 
       for (const pp of petPeeves) {
-        const ppRes = await fetch('/api/petPeeves', {
+        const ppRes = await fetch('/api/profiles/petPeeves', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: user.email, petPeeve: pp }),
@@ -189,7 +189,7 @@ export default function ProfileSetup() {
         if (!ppRes.ok) throw new Error('Failed to save pet peeves');
       }
 
-      const compRes = await fetch('/api/profileSetupComplete', {
+      const compRes = await fetch('/api/profiles/profileSetupComplete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: user.email }),

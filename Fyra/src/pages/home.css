@@ -3,7 +3,7 @@
   background-color: white;
   display: flex;
   flex-direction: column;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .home-header {
@@ -21,7 +21,7 @@
   font-weight: bold;
   letter-spacing: 2px;
   text-transform: uppercase;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .header-right {
@@ -29,13 +29,13 @@
   flex-direction: column;
   align-items: flex-end;
   color: white;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .university-text {
   font-size: 14px;
   margin-bottom: 8px;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .sign-out-button {
@@ -45,8 +45,7 @@
   font-size: 14px;
   cursor: pointer;
   padding: 0;
-  font-family: Helvetica, Arial, sans-serif;
-  text-decoration: underline;
+  font-family: var(--font-sans);
 }
 
 .sign-out-button:hover {
@@ -61,7 +60,7 @@
   color: white;
   font-size: 32px;
   font-weight: bold;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .main-content {
@@ -77,7 +76,8 @@
   border: 2px solid #E0E0E0;
   border-radius: 12px;
   overflow: hidden;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
+  flex-shrink: 0;
 }
 
 .week-calendar-header {
@@ -91,7 +91,7 @@
   padding: 15px 10px;
   text-align: center;
   border-right: 1px solid #E0E0E0;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .week-day-header:last-child {
@@ -108,14 +108,14 @@
   color: #666;
   margin-bottom: 5px;
   text-transform: uppercase;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .week-day-number {
   font-size: 20px;
   font-weight: 500;
   color: #333;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .week-day-header.today .week-day-number.today-number {
@@ -126,15 +126,17 @@
 .week-calendar-body {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  min-height: 200px;
+  height: 280px;
 }
 
 .week-day-cell {
   border-right: 1px solid #E0E0E0;
   border-bottom: 1px solid #E0E0E0;
   padding: 10px;
-  min-height: 200px;
+  min-height: 0;
   background-color: white;
+  display: flex;
+  flex-direction: column;
 }
 
 .week-day-cell:last-child,
@@ -144,6 +146,67 @@
 
 .week-day-cell.today-cell {
   background-color: #fff5f5;
+}
+
+.week-day-events {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  flex: 1;
+}
+
+.week-day-more {
+  font-size: 11px;
+  padding: 4px 0;
+  border: none;
+  background: transparent;
+  color: #a12d2e;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: underline;
+  font-family: var(--font-sans);
+  flex-shrink: 0;
+  margin-top: auto;
+}
+
+.week-day-more:hover {
+  opacity: 0.8;
+}
+
+.week-event-bubble {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: none;
+  color: white;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.week-event-bubble:hover {
+  opacity: 0.9;
+}
+
+.week-event-time {
+  font-size: 10px;
+  opacity: 0.95;
+  margin-bottom: 2px;
+}
+
+.week-event-title {
+  font-size: 12px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 .bottom-sections {
@@ -159,7 +222,7 @@
   border: 2px solid #E0E0E0;
   border-radius: 12px;
   padding: 20px;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .chores-header {
@@ -174,7 +237,7 @@
   font-size: 20px;
   font-weight: bold;
   color: #333;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .add-chore-button {
@@ -189,7 +252,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .add-chore-button:hover {
@@ -205,7 +268,7 @@
   font-size: 18px;
   color: #333;
   margin-top: 20px;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .bottom-nav {
@@ -214,7 +277,7 @@
   display: flex;
   justify-content: space-around;
   align-items: center;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .nav-item {
@@ -222,7 +285,7 @@
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
   background: none;
   border: none;
   padding: 0;
@@ -230,4 +293,117 @@
 
 .nav-item:hover {
   opacity: 0.8;
+}
+
+/* Mobile: header and layout */
+@media (max-width: 600px) {
+  .home-header {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+  }
+
+  .logo-left {
+    font-size: 18px;
+    letter-spacing: 1px;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .university-text {
+    font-size: 10px;
+    margin-bottom: 4px;
+    line-height: 1.2;
+  }
+
+  .sign-out-button {
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+  }
+
+  .main-content {
+    padding: 12px 16px;
+    gap: 12px;
+  }
+
+  .bottom-nav {
+    padding: 12px;
+  }
+
+  .nav-item {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+
+  /* Week calendar: horizontal scroll with wider columns (7 × 120px min) */
+  .week-calendar {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .week-calendar-header,
+  .week-calendar-body {
+    grid-template-columns: repeat(7, minmax(120px, 1fr));
+    min-width: 840px;
+  }
+
+  .week-day-header {
+    padding: 10px 8px;
+    min-width: 120px;
+  }
+
+  .week-day-name {
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+
+  .week-day-number {
+    font-size: 18px;
+  }
+
+  .week-calendar-body {
+    height: 220px;
+  }
+
+  .week-day-cell {
+    padding: 8px 6px;
+    min-width: 120px;
+  }
+
+  .week-event-bubble {
+    padding: 5px 6px;
+  }
+
+  .week-event-time {
+    font-size: 10px;
+  }
+
+  .week-event-title {
+    font-size: 12px;
+  }
+
+  /* Bottom sections: stack vertically */
+  .bottom-sections {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .chores-section,
+  .roommate-section {
+    padding: 16px;
+  }
+
+  .chores-title,
+  .roommate-title {
+    font-size: 18px;
+  }
 }

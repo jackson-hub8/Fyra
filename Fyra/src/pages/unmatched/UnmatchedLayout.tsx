@@ -4,8 +4,8 @@
 
 import { useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import './profile.css';
+import { useAuth } from '../../context/AuthContext';
+import '../profile/profile.css';
 
 export default function UnmatchedLayout() {
   const { user, signOut } = useAuth();

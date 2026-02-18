@@ -61,7 +61,7 @@ const SignupPage2 = () => {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch('/api/signupStart', {
+      const response = await fetch('/api/auth/signupStart', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -99,7 +99,7 @@ const SignupPage2 = () => {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch('/api/signupVerify', {
+      const response = await fetch('/api/auth/signupVerify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: signupData.email, code: digits }),
@@ -134,7 +134,7 @@ const SignupPage2 = () => {
     if (secondsLeft > 0) return;
     setError('');
     try {
-      const response = await fetch('/api/signupResend', {
+      const response = await fetch('/api/auth/signupResend', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: signupData.email }),

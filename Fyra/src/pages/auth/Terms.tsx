@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import './login.css';
 
 interface TermsLocationState {
@@ -35,7 +35,7 @@ const Terms = () => {
     setError('');
     setIsSubmitting(true);
     try {
-      const response = await fetch('/api/signupComplete', {
+      const response = await fetch('/api/auth/signupComplete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: state.email, accept }),
@@ -113,4 +113,3 @@ const Terms = () => {
 };
 
 export default Terms;
-

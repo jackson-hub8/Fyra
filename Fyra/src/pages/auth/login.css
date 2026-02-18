@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: flex-start;
   padding-top: 60px;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .logo-container {
@@ -24,7 +24,7 @@
   letter-spacing: 4px;
   margin: 0;
   text-transform: uppercase;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .form-card {
@@ -34,7 +34,7 @@
   width: 90%;
   max-width: 500px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .form-title {
@@ -43,7 +43,7 @@
   color: black;
   text-align: center;
   margin: 0 0 40px 0;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .account-form {
@@ -61,7 +61,7 @@
   background-color: #F5F5F5;
   color: #333;
   box-sizing: border-box;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .password-input::placeholder {
@@ -89,7 +89,7 @@
   padding: 10px 20px;
   font-weight: 500;
   transition: opacity 0.2s;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .login-button:hover {
@@ -101,7 +101,7 @@
   margin-top: 20px;
   font-size: 14px;
   color: black;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .signup-text {
@@ -147,7 +147,7 @@
   padding: 10px 20px;
   font-weight: bold;
   transition: opacity 0.2s;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .back-button:hover,
@@ -169,7 +169,7 @@
   margin-bottom: 20px;
   font-size: 14px;
   text-align: center;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .terms-scroll {
@@ -183,4 +183,47 @@
   color: #333;
   line-height: 1.5;
   margin-bottom: 24px;
+}
+
+/* Mobile: reduce padding and font sizes */
+@media (max-width: 600px) {
+  .login-page {
+    padding-top: 32px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .logo-container {
+    margin-bottom: 24px;
+  }
+
+  .logo-text {
+    font-size: 36px;
+    letter-spacing: 2px;
+  }
+
+  .form-card {
+    padding: 24px 16px;
+    width: 100%;
+    border-radius: 20px;
+  }
+
+  .form-title {
+    font-size: 24px;
+    margin-bottom: 24px;
+  }
+
+  .account-form {
+    gap: 16px;
+  }
+
+  .password-input {
+    padding: 14px 16px;
+    font-size: 16px;
+  }
+
+  .terms-scroll {
+    padding: 12px 16px;
+    margin-bottom: 20px;
+  }
 }

@@ -36,8 +36,8 @@ export default function ProfileCard({ email }: { email: string }) {
     setError('');
     try {
       const [pRes, ppRes] = await Promise.all([
-        fetch(`/api/profiles?email=${encodeURIComponent(email)}`),
-        fetch(`/api/petPeeves?email=${encodeURIComponent(email)}`),
+        fetch(`/api/profiles/profiles?email=${encodeURIComponent(email)}`),
+        fetch(`/api/profiles/petPeeves?email=${encodeURIComponent(email)}`),
       ]);
       if (!pRes.ok) throw new Error('Failed to load profile');
       if (!ppRes.ok) throw new Error('Failed to load pet peeves');
@@ -101,7 +101,7 @@ export default function ProfileCard({ email }: { email: string }) {
     try {
       const interests = editInterests;
       const daily = editDailyLife;
-      const pRes = await fetch('/api/profiles', {
+      const pRes = await fetch('/api/profiles/profiles', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -119,10 +119,10 @@ export default function ProfileCard({ email }: { email: string }) {
       const toAdd = editPetPeeves.filter((x) => !existing.has(x));
       const toRemove = petPeeves.filter((p) => !editPetPeeves.includes(p.petPeeve));
       for (const pp of toRemove) {
-        await fetch(`/api/petPeeves?email=${encodeURIComponent(email)}&id=${pp.id}`, { method: 'DELETE' });
+        await fetch(`/api/profiles/petPeeves?email=${encodeURIComponent(email)}&id=${pp.id}`, { method: 'DELETE' });
       }
       for (const pp of toAdd) {
-        const res = await fetch('/api/petPeeves', {
+        const res = await fetch('/api/profiles/petPeeves', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, petPeeve: pp }),

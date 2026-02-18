@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import './login.css';
 
 const Login = () => {
@@ -27,7 +27,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/users', {
+      const response = await fetch('/api/auth/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

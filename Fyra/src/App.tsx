@@ -3,18 +3,20 @@
 /// Main app component with routing
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './pages/Login';
+import Login from './pages/auth/Login';
 import Home from './pages/Home';
-import Calendar from './pages/Calendar';
-import Profile from './pages/Profile';
-import SignupPage1 from './pages/SignupPage1';
-import SignupPage2 from './pages/SignupPage2';
-import ProfileSetup from './pages/ProfileSetup';
-import Terms from './pages/Terms';
-import UnmatchedLayout from './pages/UnmatchedLayout';
-import UnmatchedIndex from './pages/UnmatchedIndex';
-import UnmatchedSearch from './pages/UnmatchedSearch';
-import UnmatchedMatching from './pages/UnmatchedMatching';
+import Calendar from './pages/calendar/Calendar';
+import CreateEvent from './pages/calendar/CreateEvent';
+import EditEvent from './pages/calendar/EditEvent';
+import Profile from './pages/profile/Profile';
+import SignupPage1 from './pages/auth/SignupPage1';
+import SignupPage2 from './pages/auth/SignupPage2';
+import ProfileSetup from './pages/auth/ProfileSetup';
+import Terms from './pages/auth/Terms';
+import UnmatchedLayout from './pages/unmatched/UnmatchedLayout';
+import UnmatchedIndex from './pages/unmatched/UnmatchedIndex';
+import UnmatchedSearch from './pages/unmatched/UnmatchedSearch';
+import UnmatchedMatching from './pages/unmatched/UnmatchedMatching';
 
 const App = () => {
   return (
@@ -29,6 +31,8 @@ const App = () => {
         <Route path="/matched" element={<Home />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/calendar" element={<Calendar />} />
+        <Route path="/calendar/new" element={<CreateEvent />} />
+        <Route path="/calendar/edit/:id" element={<EditEvent />} />
         <Route path="/unmatched" element={<UnmatchedLayout />}>
           <Route index element={<UnmatchedIndex />} />
           <Route path="search" element={<UnmatchedSearch />} />

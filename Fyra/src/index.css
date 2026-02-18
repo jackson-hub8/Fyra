@@ -4,9 +4,32 @@
   box-sizing: border-box;
 }
 
+/* Responsive breakpoints (use in media queries across the app):
+   Mobile: max-width 599px (phones)
+   Tablet: 600px–899px
+   Desktop: 900px+ */
+:root {
+  --font-sans: "Segoe UI Variable", "Segoe UI", -apple-system, BlinkMacSystemFont, "Roboto", sans-serif;
+  --bp-mobile: 599px;
+  --bp-tablet: 900px;
+}
+
+[data-platform="windows"] {
+  --font-sans: "Segoe UI Variable", "Segoe UI", sans-serif;
+}
+
+[data-platform="mac"],
+[data-platform="ios"] {
+  --font-sans: -apple-system, BlinkMacSystemFont, "San Francisco", sans-serif;
+}
+
+[data-platform="android"] {
+  --font-sans: "Roboto", sans-serif;
+}
+
 body {
   margin: 0;
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
