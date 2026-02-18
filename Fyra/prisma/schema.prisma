@@ -137,12 +137,32 @@ model Matches {
   // Relations
   user1 Users @relation("User1Matches", fields: [userEmail1], references: [email], onDelete: Cascade)
   user2 Users @relation("User2Matches", fields: [userEmail2], references: [email], onDelete: Cascade)
+  calendarEvents CalendarEvents[]
 
   // Prevent duplicate matches between same two users (regardless of order)
   @@unique([userEmail1, userEmail2])
   @@index([userEmail1])
   @@index([userEmail2])
   @@map("matches")
+}
+
+model CalendarEvents {
+  id           Int      @id @default(autoincrement())
+  matchId      Int
+  creatorEmail String   @db.VarChar(255)
+  title        String   @db.VarChar(500)
+  description  String?  @db.Text
+  startDate    String   @db.VarChar(10)
+  endDate      String   @db.VarChar(10)
+  startTime    String?  @db.VarChar(5)
+  endTime      String?  @db.VarChar(5)
+  isAllDay     Boolean
+  createdAt    DateTime @default(now()) @db.Timestamp(6)
+
+  match Matches @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@index([matchId])
+  @@map("calendar_events")
 }
 
 model PendingSignups {
