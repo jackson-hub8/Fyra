@@ -15,6 +15,12 @@
   position: relative;
 }
 
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .logo-left {
   color: white;
   font-size: 24px;
@@ -24,12 +30,33 @@
   font-family: var(--font-sans);
 }
 
+.header-left .university-text {
+  font-size: 13px;
+  margin: 0;
+  color: white;
+  font-family: var(--font-sans);
+}
+
 .header-right {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  gap: 10px;
   color: white;
   font-family: var(--font-sans);
+}
+
+.header-settings-link {
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  line-height: 1;
+}
+
+.header-settings-link:hover {
+  opacity: 0.85;
 }
 
 .university-text {
@@ -259,6 +286,68 @@
   opacity: 0.7;
 }
 
+.chores-list-scroll {
+  overflow-y: auto;
+  max-height: 200px;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+}
+
+.chores-empty {
+  color: #666;
+  font-size: 14px;
+  margin: 0;
+  padding: 12px 0;
+}
+
+.chore-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  background: #fafafa;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-sans);
+  transition: background 0.2s;
+}
+
+.chore-item:hover {
+  background: #f0f0f0;
+}
+
+.chore-item-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chore-item-completed .chore-item-title {
+  text-decoration: line-through;
+  color: #888;
+}
+
+.chore-item-day {
+  font-size: 12px;
+  color: #666;
+  flex-shrink: 0;
+}
+
+.chore-item-completed .chore-item-day {
+  color: #999;
+}
+
 .roommate-title {
   text-align: center;
 }
@@ -406,4 +495,160 @@
   .roommate-title {
     font-size: 18px;
   }
+
+  .chores-list-scroll {
+    max-height: 160px;
+  }
+}
+
+/* Chore modals (shared with calendar modal overlay) */
+.chore-detail-modal {
+  background: white;
+  border-radius: 12px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  font-family: var(--font-sans);
+}
+
+.chore-detail-header {
+  padding: 16px 20px;
+  border-top: 4px solid #a12d2e;
+  border-radius: 12px 12px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.chore-detail-header h3 {
+  margin: 0;
+  font-size: 20px;
+  color: #333;
+  flex: 1;
+  padding-right: 12px;
+}
+
+.chore-detail-body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chore-detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chore-detail-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+}
+
+.chore-detail-actions {
+  padding: 16px 20px;
+  border-top: 1px solid #E0E0E0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.chore-complete-btn,
+.edit-chore-btn,
+.delete-chore-btn,
+.cancel-chore-btn {
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-sans);
+}
+
+.chore-complete-btn {
+  background: #2d5a8e;
+  color: white;
+  border: none;
+}
+
+.chore-complete-btn:hover {
+  opacity: 0.9;
+}
+
+.edit-chore-btn {
+  background: #a12d2e;
+  color: white;
+  border: none;
+}
+
+.edit-chore-btn:hover {
+  opacity: 0.9;
+}
+
+.delete-chore-btn {
+  background: white;
+  color: #c62828;
+  border: 2px solid #c62828;
+}
+
+.delete-chore-btn:hover {
+  background: #ffebee;
+}
+
+.cancel-chore-btn {
+  background: #f5f5f5;
+  color: #333;
+  border: 1px solid #E0E0E0;
+}
+
+.cancel-chore-btn:hover {
+  background: #eee;
+}
+
+.add-chore-form {
+  padding: 16px 20px;
+}
+
+.add-chore-field {
+  margin-bottom: 14px;
+}
+
+.add-chore-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.add-chore-field input,
+.add-chore-field select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #E0E0E0;
+  border-radius: 8px;
+  font-size: 15px;
+  font-family: var(--font-sans);
+  box-sizing: border-box;
+}
+
+.add-chore-field input:focus,
+.add-chore-field select:focus {
+  outline: none;
+  border-color: #a12d2e;
+}
+
+.add-chore-error {
+  color: #c62828;
+  font-size: 14px;
+  margin: 0 0 12px 0;
+}
+
+.add-chore-modal .chore-detail-actions {
+  margin-top: 8px;
 }

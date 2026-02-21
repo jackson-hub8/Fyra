@@ -3,12 +3,17 @@
 /// Home page for matched users with current week calendar and events.
 
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useEvents } from '../context/EventsContext';
+import { useChores } from '../context/ChoresContext';
 import type { CalendarEvent } from '../context/EventsContext';
+import type { Chore } from '../context/ChoresContext';
 import DayViewModal from '../components/calendar/DayViewModal';
 import EventDetailModal from '../components/calendar/EventDetailModal';
+import ChoreDetailModal from '../components/chores/ChoreDetailModal';
+import AddChoreModal from '../components/chores/AddChoreModal';
+import EditChoreModal from '../components/chores/EditChoreModal';
 import './home.css';
 import './calendar/calendar.css';
 
@@ -23,8 +28,17 @@ const Home = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { getEventsForDate, getEventColor, deleteEvent } = useEvents();
+  const {
+    getChoresForWeek,
+    addChore,
+    updateChore,
+    deleteChore,
+  } = useChores();
   const [detailEvent, setDetailEvent] = useState<CalendarEvent | null>(null);
   const [dayViewDate, setDayViewDate] = useState<Date | null>(null);
+  const [detailChore, setDetailChore] = useState<Chore | null>(null);
+  const [showAddChore, setShowAddChore] = useState(false);
+  const [editChore, setEditChore] = useState<Chore | null>(null);
 
   useEffect(() => {
     if (!user?.email) {
@@ -86,13 +100,58 @@ const Home = () => {
     }
   };
 
+  // Current week range for chores (same as week calendar)
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  const weekChores = getChoresForWeek(startOfWeek, endOfWeek);
+
+  const handleAddChore = async (title: string, dueDate: string) => {
+    await addChore({ title, dueDate, completed: false });
+  };
+
+  const handleChoreToggleComplete = async (id: string, completed: boolean) => {
+    await updateChore(id, { completed });
+    setDetailChore((c) => (c?.id === id ? { ...c, completed } : c));
+  };
+
+  const handleChoreDelete = async (id: string) => {
+    try {
+      await deleteChore(id);
+      setDetailChore(null);
+      setEditChore(null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to delete chore');
+    }
+  };
+
+  const handleChoreEdit = (chore: Chore) => {
+    setDetailChore(null);
+    setEditChore(chore);
+  };
+
+  const handleEditChoreSubmit = async (id: string, title: string, dueDate: string) => {
+    await updateChore(id, { title, dueDate });
+    setEditChore(null);
+    setDetailChore((c) => (c?.id === id ? { ...c, title, dueDate } : c));
+  };
+
+  function choreDayLabel(dueDate: string): string {
+    const d = weekDays.find((wd) => wd.date.toISOString().slice(0, 10) === dueDate);
+    return d ? d.dayName : dueDate;
+  }
+
   return (
     <div className="home-page">
       <div className="home-header">
-        <div className="logo-left">FYRA</div>
+        <div className="header-left">
+          <div className="logo-left">FYRA</div>
+          <div className="university-text">Transylvania University</div>
+        </div>
         <div className="page-title">Home</div>
         <div className="header-right">
-          <div className="university-text">Transylvania University</div>
+          <Link to="/settings" className="header-settings-link" aria-label="Settings">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </Link>
           <button className="sign-out-button" onClick={handleSignOut}>
             Sign Out
           </button>
@@ -159,7 +218,31 @@ const Home = () => {
           <div className="chores-section">
             <div className="chores-header">
               <div className="chores-title">Chores</div>
-              <button className="add-chore-button">+</button>
+              <button
+                type="button"
+                className="add-chore-button"
+                onClick={() => setShowAddChore(true)}
+                aria-label="Add chore"
+              >
+                +
+              </button>
+            </div>
+            <div className="chores-list-scroll">
+              {weekChores.length === 0 ? (
+                <p className="chores-empty">No chores this week. Tap + to add one.</p>
+              ) : (
+                weekChores.map((chore) => (
+                  <button
+                    key={chore.id}
+                    type="button"
+                    className={`chore-item ${chore.completed ? 'chore-item-completed' : ''}`}
+                    onClick={() => setDetailChore(chore)}
+                  >
+                    <span className="chore-item-title">{chore.title}</span>
+                    <span className="chore-item-day">{choreDayLabel(chore.dueDate)}</span>
+                  </button>
+                ))
+              )}
             </div>
           </div>
 
@@ -186,6 +269,29 @@ const Home = () => {
           onEdit={handleEdit}
           onDelete={handleDelete}
           getEventColor={getEventColor}
+        />
+      )}
+
+      {detailChore && (
+        <ChoreDetailModal
+          chore={detailChore}
+          onClose={() => setDetailChore(null)}
+          onEdit={handleChoreEdit}
+          onToggleComplete={handleChoreToggleComplete}
+          onDelete={handleChoreDelete}
+        />
+      )}
+      {showAddChore && (
+        <AddChoreModal
+          onClose={() => setShowAddChore(false)}
+          onSubmit={handleAddChore}
+        />
+      )}
+      {editChore && (
+        <EditChoreModal
+          chore={editChore}
+          onClose={() => setEditChore(null)}
+          onSubmit={handleEditChoreSubmit}
         />
       )}
 

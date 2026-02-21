@@ -6,6 +6,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { EventsProvider } from './context/EventsContext';
+import { ChoresProvider } from './context/ChoresContext';
 import './index.css';
 
 function getPlatform(): 'windows' | 'mac' | 'ios' | 'android' | '' {
@@ -23,7 +24,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <AuthProvider>
       <EventsProvider>
-        <App />
+        <ChoresProvider>
+          <App />
+        </ChoresProvider>
       </EventsProvider>
     </AuthProvider>
   </React.StrictMode>
