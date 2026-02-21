@@ -138,6 +138,7 @@ model Matches {
   user1 Users @relation("User1Matches", fields: [userEmail1], references: [email], onDelete: Cascade)
   user2 Users @relation("User2Matches", fields: [userEmail2], references: [email], onDelete: Cascade)
   calendarEvents CalendarEvents[]
+  chores Chores[]
 
   // Prevent duplicate matches between same two users (regardless of order)
   @@unique([userEmail1, userEmail2])
@@ -163,6 +164,20 @@ model CalendarEvents {
 
   @@index([matchId])
   @@map("calendar_events")
+}
+
+model Chores {
+  id        Int      @id @default(autoincrement())
+  matchId   Int
+  title     String   @db.VarChar(500)
+  dueDate   String   @db.VarChar(10)
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+
+  match Matches @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@index([matchId])
+  @@map("chores")
 }
 
 model PendingSignups {

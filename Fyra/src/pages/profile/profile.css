@@ -34,19 +34,39 @@
   font-family: var(--font-sans);
 }
 
+.profile-header .header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-header .header-left .university-text {
+  font-size: 13px;
+  margin: 0;
+  color: white;
+  font-family: var(--font-sans);
+}
+
 .profile-header .header-right {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  gap: 10px;
   color: white;
   font-size: 14px;
 }
 
-.profile-header .university-text {
+.profile-header .header-settings-link {
   color: white;
-  font-size: 14px;
-  margin-bottom: 8px;
-  font-family: var(--font-sans);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  line-height: 1;
+}
+
+.profile-header .header-settings-link:hover {
+  opacity: 0.85;
 }
 
 .profile-header .sign-out-button {
