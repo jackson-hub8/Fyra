@@ -60,8 +60,8 @@ const Home = () => {
   const startOfWeek = new Date(today);
   startOfWeek.setDate(today.getDate() - currentDay);
 
-  const weekDays = [];
   const dayNamesShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const weekDays: { dayName: string; dayNumber: number; date: Date; isToday: boolean }[] = [];
 
   for (let i = 0; i < 7; i++) {
     const date = new Date(startOfWeek);
