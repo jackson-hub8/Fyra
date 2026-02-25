@@ -89,8 +89,9 @@ model PrivateQuestionnaire {
   gender                String?  @db.VarChar(100)
   adaAccommodations     String?  @db.Text
   animalAllergies       String?  @db.Text
-  varsitySport          String?  @db.VarChar(100)
+  varsitySport          String?  @db.Text
   smoking               String?  @db.VarChar(50)
+  cannabis              String?  @db.VarChar(50)
   alcohol               String?  @db.VarChar(50)
   roomTemp              String?  @db.VarChar(50)
   bedroomDescription    String?  @db.Text
@@ -105,7 +106,7 @@ model PrivateQuestionnaire {
   politicalViews        String?  @db.VarChar(100)
   religion              String?  @db.VarChar(100)
   studyEnvironment      String?  @db.VarChar(100)
-  intendedMajor         String?  @db.VarChar(100)
+  intendedMajor         String?  @db.Text
   vehicleToCampus       String?  @db.VarChar(50)
 
   user Users @relation(fields: [userEmail], references: [email], onDelete: Cascade)

@@ -53,7 +53,7 @@ const SignupPage1 = () => {
         <form onSubmit={handleSubmit} className="account-form">
           <input
             type="text"
-            placeholder="First Name"
+            placeholder="First Name *"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
             className="password-input"
@@ -61,7 +61,7 @@ const SignupPage1 = () => {
           />
           <input
             type="text"
-            placeholder="Last Name"
+            placeholder="Last Name *"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
             className="password-input"
@@ -69,7 +69,7 @@ const SignupPage1 = () => {
           />
           <input
             type="email"
-            placeholder={`Email (must end with ${REQUIRED_EMAIL_DOMAIN})`}
+            placeholder={`Email * (must end with ${REQUIRED_EMAIL_DOMAIN})`}
             value={email}
             onChange={(e) => {
               setEmail(e.target.value);

@@ -37,6 +37,15 @@
   font-family: var(--font-sans);
 }
 
+.form-card-profile-build {
+  max-width: 920px;
+}
+
+/* Profile setup: allow page to scroll so select dropdowns have room to open below */
+.login-page-profile-setup {
+  min-height: 160vh;
+}
+
 .form-title {
   font-size: 32px;
   font-weight: bold;
@@ -207,6 +216,7 @@
     width: 100%;
     border-radius: 20px;
   }
+
 
   .form-title {
     font-size: 24px;

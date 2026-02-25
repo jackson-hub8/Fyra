@@ -213,7 +213,7 @@ const SignupPage2 = () => {
         <form onSubmit={handleSubmit} className="account-form">
           <input
             type="password"
-            placeholder="Password"
+            placeholder="Password *"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="password-input"
@@ -222,7 +222,7 @@ const SignupPage2 = () => {
           />
           <input
             type="password"
-            placeholder="Confirm Password"
+            placeholder="Confirm Password *"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             className="password-input"

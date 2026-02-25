@@ -6,9 +6,70 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { PROFILE_QUESTIONS } from '../../config/profileQuestions';
+import type { AllergyCategory, SportCategory } from '../../config/profileQuestions';
+import ProfileCardSetup from '../../components/ProfileCardSetup';
 import './login.css';
 
 const TOTAL_QUESTION_PAGES = PROFILE_QUESTIONS.length;
+
+const ALLERGIES_DELIMITER = ' | ';
+const SPORTS_DELIMITER = ' | ';
+const CHECKLIST_DELIMITER = ' | ';
+
+function parseChecklistValue(value: string): Set<string> {
+  const selected = new Set<string>();
+  (value || '')
+    .split(CHECKLIST_DELIMITER)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .forEach((p) => selected.add(p));
+  return selected;
+}
+
+function buildChecklistValue(selected: Set<string>): string {
+  return [...selected].join(CHECKLIST_DELIMITER);
+}
+
+function parseSportsValue(value: string): Set<string> {
+  const selected = new Set<string>();
+  (value || '')
+    .split(SPORTS_DELIMITER)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .forEach((p) => selected.add(p));
+  return selected;
+}
+
+function buildSportsValue(selected: Set<string>, noneSelected: boolean): string {
+  if (noneSelected) return 'None';
+  return [...selected].filter((v) => v !== 'None').join(SPORTS_DELIMITER);
+}
+
+function parseAllergiesValue(value: string): { selected: Set<string>; otherText: string } {
+  const selected = new Set<string>();
+  let otherText = '';
+  const parts = (value || '').split(ALLERGIES_DELIMITER).map((p) => p.trim()).filter(Boolean);
+  for (const p of parts) {
+    if (p.startsWith('Other:')) {
+      selected.add('Other');
+      otherText = p.slice(6).trim();
+    } else {
+      selected.add(p);
+    }
+  }
+  return { selected, otherText };
+}
+
+function buildAllergiesValue(selected: Set<string>, otherText: string): string {
+  const parts: string[] = [];
+  selected.forEach((v) => {
+    if (v !== 'Other') parts.push(v);
+  });
+  if (selected.has('Other')) {
+    parts.push(otherText ? `Other: ${otherText}` : 'Other');
+  }
+  return parts.join(ALLERGIES_DELIMITER);
+}
 
 export default function ProfileSetup() {
   const { user, setUser } = useAuth();
@@ -24,6 +85,7 @@ export default function ProfileSetup() {
   const [petPeeves, setPetPeeves] = useState<string[]>([]);
   const [adaAccommodationsDetails, setAdaAccommodationsDetails] = useState('');
   const [petPeeveInput, setPetPeeveInput] = useState('');
+  const [tagInputByQuestionId, setTagInputByQuestionId] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -37,6 +99,12 @@ export default function ProfileSetup() {
   const isQuestionPage = !buildProfile;
   const currentQuestions = isQuestionPage ? PROFILE_QUESTIONS[page] : [];
   const isLastQuestionPage = isQuestionPage && page === TOTAL_QUESTION_PAGES - 1;
+
+  const isBuildProfileValid =
+    bio.trim().length > 0 &&
+    topInterests.length > 0 &&
+    dailyLife.length > 0 &&
+    petPeeves.length > 0;
 
   const updateForm = (id: string, value: string) => {
     setForm((prev) => ({ ...prev, [id]: value }));
@@ -53,6 +121,38 @@ export default function ProfileSetup() {
       if (q.id === 'adaAccommodations' && v === 'Yes' && !adaAccommodationsDetails.trim()) {
         setError('Please specify your accommodations.');
         return false;
+      }
+      if (q.id === 'animalAllergies' && q.type === 'allergies') {
+        const { selected, otherText } = parseAllergiesValue(v);
+        if (selected.has('Other') && !otherText.trim()) {
+          setError('Please specify your other allergy.');
+          return false;
+        }
+      }
+      if (q.type === 'tags' && q.required) {
+        const items = (v ? v.split(',').map((s) => s.trim()).filter(Boolean) : []) as string[];
+        if (items.length === 0) {
+          setError(`Please add at least one item for: ${q.label.replace(/\s*\*$/, '')}`);
+          return false;
+        }
+      }
+      if (q.type === 'checklist' && q.required) {
+        const selected = parseChecklistValue(v);
+        if (selected.size === 0) {
+          setError(`Please select at least one option for: ${q.label.replace(/\s*\*$/, '')}`);
+          return false;
+        }
+        const single = q.singleChoiceValue;
+        const max = q.maxSelections ?? 3;
+        if (single && selected.has(single)) {
+          if (selected.size > 1) {
+            setError(`Please select either ${single} or up to ${max} majors, not both.`);
+            return false;
+          }
+        } else if (selected.size > max) {
+          setError(`Please select at most ${max} options.`);
+          return false;
+        }
       }
     }
     return true;
@@ -208,100 +308,36 @@ export default function ProfileSetup() {
   if (!user?.email) return null;
 
   return (
-    <div className="login-page">
+    <div className="login-page login-page-profile-setup">
       <div className="logo-container">
         <h1 className="logo-text">FYRA</h1>
       </div>
-      <div className="form-card">
+      <div className={`form-card ${buildProfile ? 'form-card-profile-build' : ''}`}>
         <h2 className="form-title">
           {buildProfile ? 'Build your profile' : `Profile setup (${page + 1} of ${TOTAL_QUESTION_PAGES})`}
         </h2>
         {error && <div className="error-message">{error}</div>}
 
         {buildProfile ? (
-          <div className="account-form">
-            <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Bio *</label>
-            <textarea
-              className="password-input"
-              placeholder="A short intro, e.g. major, hometown, interests..."
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              rows={4}
-              style={{ resize: 'vertical', minHeight: 80 }}
-            />
-            <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Top interests *</label>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-              <input
-                type="text"
-                className="password-input"
-                placeholder="e.g. Football, Cooking, Reading"
-                value={topInterestsInput}
-                onChange={(e) => setTopInterestsInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTopInterest())}
-              />
-              <button type="button" className="submit-button" onClick={addTopInterest}>
-                Add
-              </button>
-            </div>
-            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 16px 0' }}>
-              {topInterests.map((item, i) => (
-                <li key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <span>{item}</span>
-                  <button type="button" className="back-button" onClick={() => removeTopInterest(i)}>
-                    Remove
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Daily life *</label>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-              <input
-                type="text"
-                className="password-input"
-                placeholder="e.g. Disorganized but not messy, Early Bird"
-                value={dailyLifeInput}
-                onChange={(e) => setDailyLifeInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addDailyLifeItem())}
-              />
-              <button type="button" className="submit-button" onClick={addDailyLifeItem}>
-                Add
-              </button>
-            </div>
-            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 16px 0' }}>
-              {dailyLife.map((item, i) => (
-                <li key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <span>{item}</span>
-                  <button type="button" className="back-button" onClick={() => removeDailyLifeItem(i)}>
-                    Remove
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Roommate pet peeves *</label>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-              <input
-                type="text"
-                className="password-input"
-                placeholder="e.g. Loud chewers"
-                value={petPeeveInput}
-                onChange={(e) => setPetPeeveInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addPetPeeve())}
-              />
-              <button type="button" className="submit-button" onClick={addPetPeeve}>
-                Add
-              </button>
-            </div>
-            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 16px 0' }}>
-              {petPeeves.map((pp, i) => (
-                <li key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <span>{pp}</span>
-                  <button type="button" className="back-button" onClick={() => removePetPeeve(i)}>
-                    Remove
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <ProfileCardSetup
+            bio={bio}
+            onBioChange={setBio}
+            topInterests={topInterests}
+            topInterestsInput={topInterestsInput}
+            onTopInterestsInputChange={setTopInterestsInput}
+            onAddTopInterest={addTopInterest}
+            onRemoveTopInterest={removeTopInterest}
+            dailyLife={dailyLife}
+            dailyLifeInput={dailyLifeInput}
+            onDailyLifeInputChange={setDailyLifeInput}
+            onAddDailyLifeItem={addDailyLifeItem}
+            onRemoveDailyLifeItem={removeDailyLifeItem}
+            petPeeves={petPeeves}
+            petPeeveInput={petPeeveInput}
+            onPetPeeveInputChange={setPetPeeveInput}
+            onAddPetPeeve={addPetPeeve}
+            onRemovePetPeeve={removePetPeeve}
+          />
         ) : (
           <div className="account-form">
             {currentQuestions.map((q) => (
@@ -355,6 +391,205 @@ export default function ProfileSetup() {
                     style={{ resize: 'vertical' }}
                   />
                 )}
+                {q.type === 'tags' && (() => {
+                  const raw = (form[q.id] ?? '').trim();
+                  const items = raw ? raw.split(',').map((s) => s.trim()).filter(Boolean) : [];
+                  const tagInput = tagInputByQuestionId[q.id] ?? '';
+                  const addTag = (newItem: string) => {
+                    const v = newItem.trim();
+                    if (!v || items.includes(v)) return;
+                    updateForm(q.id, [...items, v].join(', '));
+                    setTagInputByQuestionId((prev) => ({ ...prev, [q.id]: '' }));
+                  };
+                  const removeTag = (idx: number) => {
+                    updateForm(
+                      q.id,
+                      items.filter((_, i) => i !== idx).join(', ')
+                    );
+                  };
+                  return (
+                    <div>
+                      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                        <input
+                          type="text"
+                          className="password-input"
+                          placeholder={q.placeholder}
+                          value={tagInput}
+                          onChange={(e) =>
+                            setTagInputByQuestionId((prev) => ({ ...prev, [q.id]: e.target.value }))
+                          }
+                          onKeyDown={(e) =>
+                            e.key === 'Enter' && (e.preventDefault(), addTag(tagInput))
+                          }
+                        />
+                        <button type="button" className="submit-button" onClick={() => addTag(tagInput)}>
+                          Add
+                        </button>
+                      </div>
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                        {items.map((item, i) => (
+                          <li key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                            <span>{item}</span>
+                            <button type="button" className="back-button" onClick={() => removeTag(i)}>
+                              Remove
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })()}
+                {q.type === 'allergies' && q.allergyCategories && (() => {
+                  const raw = (form[q.id] ?? '').trim();
+                  const { selected, otherText } = parseAllergiesValue(raw);
+                  const toggle = (value: string) => {
+                    const next = new Set(selected);
+                    if (next.has(value)) next.delete(value);
+                    else next.add(value);
+                    updateForm(q.id, buildAllergiesValue(next, otherText));
+                  };
+                  const setOther = (text: string) => {
+                    const nextSelected = new Set(selected);
+                    if (text.trim()) nextSelected.add('Other');
+                    else nextSelected.delete('Other');
+                    updateForm(q.id, buildAllergiesValue(nextSelected, text));
+                  };
+                  const allOptions = (q.allergyCategories as AllergyCategory[]).flatMap((cat) => cat.options);
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {allOptions.map((opt) => (
+                        <label
+                          key={opt.value}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            cursor: 'pointer',
+                            fontWeight: 'normal',
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selected.has(opt.value) || (opt.value === 'Other' && !!otherText.trim())}
+                            onChange={() => toggle(opt.value)}
+                          />
+                          <span>{opt.label}</span>
+                        </label>
+                      ))}
+                      {(selected.has('Other') || otherText) && (
+                        <input
+                          type="text"
+                          className="password-input"
+                          placeholder="Describe your allergy..."
+                          value={otherText}
+                          onChange={(e) => setOther(e.target.value)}
+                          style={{ marginLeft: 24, maxWidth: 320 }}
+                        />
+                      )}
+                    </div>
+                  );
+                })()}
+                {q.type === 'sports' && q.sportCategories && (() => {
+                  const raw = (form[q.id] ?? '').trim();
+                  const selected = parseSportsValue(raw);
+                  const noneSelected = selected.has('None');
+                  const toggle = (value: string) => {
+                    if (value === 'None') {
+                      updateForm(q.id, 'None');
+                      return;
+                    }
+                    const next = new Set(selected);
+                    next.delete('None');
+                    if (next.has(value)) next.delete(value);
+                    else next.add(value);
+                    updateForm(q.id, buildSportsValue(next, false));
+                  };
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {(q.sportCategories as SportCategory[]).map((cat, cidx) => (
+                        <div key={cidx}>
+                          {cat.category && (
+                            <div style={{ fontWeight: 600, marginBottom: 6, color: '#555' }}>
+                              {cat.category}
+                            </div>
+                          )}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            {cat.options.map((opt) => (
+                              <label
+                                key={opt.value}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 8,
+                                  cursor: 'pointer',
+                                  fontWeight: 'normal',
+                                }}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={opt.value === 'None' ? noneSelected : selected.has(opt.value)}
+                                  onChange={() => toggle(opt.value)}
+                                />
+                                <span>{opt.label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+                {q.type === 'checklist' && q.checklistOptions && (() => {
+                  const raw = (form[q.id] ?? '').trim();
+                  const selected = parseChecklistValue(raw);
+                  const max = q.maxSelections ?? 3;
+                  const single = q.singleChoiceValue;
+                  const toggle = (value: string) => {
+                    const next = new Set(selected);
+                    if (value === single) {
+                      updateForm(q.id, single);
+                      return;
+                    }
+                    next.delete(single ?? '');
+                    if (next.has(value)) next.delete(value);
+                    else if (next.size < max) next.add(value);
+                    updateForm(q.id, buildChecklistValue(next));
+                  };
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <p style={{ margin: '0 0 4px 0', fontSize: 14, color: '#666' }}>
+                        Select up to {max}.
+                      </p>
+                      <div style={{ maxHeight: 320, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {q.checklistOptions.map((opt) => (
+                        <label
+                          key={opt.value}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            cursor: 'pointer',
+                            fontWeight: 'normal',
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selected.has(opt.value)}
+                            onChange={() => toggle(opt.value)}
+                            disabled={
+                              opt.value !== single &&
+                              !selected.has(opt.value) &&
+                              selected.size >= max &&
+                              !selected.has(single ?? '')
+                            }
+                          />
+                          <span>{opt.label}</span>
+                        </label>
+                      ))}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             ))}
           </div>
@@ -364,7 +599,12 @@ export default function ProfileSetup() {
           <button type="button" className="back-button" onClick={handleBack} disabled={isSubmitting}>
             Back
           </button>
-          <button type="button" className="submit-button" onClick={handleNext} disabled={isSubmitting}>
+          <button
+            type="button"
+            className="submit-button"
+            onClick={handleNext}
+            disabled={isSubmitting || (buildProfile && !isBuildProfileValid)}
+          >
             {isSubmitting ? 'Saving...' : buildProfile ? 'Finish' : isLastQuestionPage ? 'Continue' : 'Next'}
           </button>
         </div>
