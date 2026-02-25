@@ -1,6 +1,7 @@
 .settings-page .settings-main {
   flex: 1;
   padding: 20px;
+  padding-bottom: 72px;
   display: flex;
   align-items: flex-start;
   justify-content: center;

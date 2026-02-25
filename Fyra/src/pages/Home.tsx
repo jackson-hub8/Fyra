@@ -135,8 +135,15 @@ const Home = () => {
     setDetailChore((c) => (c?.id === id ? { ...c, title, dueDate } : c));
   };
 
+  function dateToYMD(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
   function choreDayLabel(dueDate: string): string {
-    const d = weekDays.find((wd) => wd.date.toISOString().slice(0, 10) === dueDate);
+    const d = weekDays.find((wd) => dateToYMD(wd.date) === dueDate);
     return d ? d.dayName : dueDate;
   }
 
