@@ -27,7 +27,7 @@ export default function UnmatchedLayout() {
   if (!user?.email) return null;
 
   return (
-    <div className="profile-page">
+    <div className="profile-page unmatched-page">
       <header className="profile-header">
         <div className="header-left">
           <div className="logo-left">FYRA</div>
@@ -53,10 +53,10 @@ export default function UnmatchedLayout() {
       <nav className="profile-bottom-nav">
         <button
           type="button"
-          className={`nav-item ${!isSearch && !isMatching && !isSettings ? 'active' : ''}`}
-          onClick={() => navigate('/unmatched')}
+          className={`nav-item ${isMatching ? 'active' : ''}`}
+          onClick={() => navigate('/unmatched/matching')}
         >
-          Profile
+          Matching
         </button>
         <button
           type="button"
@@ -67,10 +67,10 @@ export default function UnmatchedLayout() {
         </button>
         <button
           type="button"
-          className={`nav-item ${isMatching ? 'active' : ''}`}
-          onClick={() => navigate('/unmatched/matching')}
+          className={`nav-item ${!isSearch && !isMatching && !isSettings ? 'active' : ''}`}
+          onClick={() => navigate('/unmatched')}
         >
-          Matching
+          Profile
         </button>
       </nav>
     </div>

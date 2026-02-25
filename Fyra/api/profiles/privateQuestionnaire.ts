@@ -24,6 +24,7 @@ type QuestionnairePayload = {
   animalAllergies?: string;
   varsitySport?: string;
   smoking?: string;
+  cannabis?: string;
   alcohol?: string;
   roomTemp?: string;
   bedroomDescription?: string;
@@ -84,6 +85,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         animalAllergies: body.animalAllergies ?? undefined,
         varsitySport: body.varsitySport ?? undefined,
         smoking: body.smoking ?? undefined,
+        cannabis: body.cannabis ?? undefined,
         alcohol: body.alcohol ?? undefined,
         roomTemp: body.roomTemp ?? undefined,
         bedroomDescription: body.bedroomDescription ?? undefined,

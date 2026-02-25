@@ -240,19 +240,24 @@
   display: flex;
   gap: 20px;
   flex: 1;
+  min-height: 0;
 }
 
 .chores-section,
 .roommate-section {
   flex: 1;
+  min-height: 0;
   background-color: white;
   border: 2px solid #E0E0E0;
   border-radius: 12px;
   padding: 20px;
   font-family: var(--font-sans);
+  display: flex;
+  flex-direction: column;
 }
 
 .chores-header {
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -287,9 +292,9 @@
 }
 
 .chores-list-scroll {
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  max-height: 200px;
-  min-height: 60px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -361,12 +366,21 @@
 }
 
 .bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
   background-color: #a12d2e;
   padding: 15px;
   display: flex;
   justify-content: space-around;
   align-items: center;
   font-family: var(--font-sans);
+}
+
+.home-page .main-content {
+  padding-bottom: 72px;
 }
 
 .nav-item {
@@ -513,7 +527,7 @@
 
 .chore-detail-header {
   padding: 16px 20px;
-  border-top: 4px solid #a12d2e;
+  border-top: 4px solid #ec407a;
   border-radius: 12px 12px 0 0;
   display: flex;
   justify-content: space-between;
@@ -570,7 +584,7 @@
 }
 
 .chore-complete-btn {
-  background: #2d5a8e;
+  background: #a12d2e;
   color: white;
   border: none;
 }
@@ -640,7 +654,7 @@
 .add-chore-field input:focus,
 .add-chore-field select:focus {
   outline: none;
-  border-color: #a12d2e;
+  border-color: #ec407a;
 }
 
 .add-chore-error {

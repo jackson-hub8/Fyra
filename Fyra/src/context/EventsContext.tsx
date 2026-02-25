@@ -38,8 +38,8 @@ type EventsContextValue = {
 
 const EventsContext = createContext<EventsContextValue | null>(null);
 
-const DEFAULT_USER_COLOR = '#a12d2e';
-const SECOND_USER_COLOR = '#2d5a8e';
+const DEFAULT_USER_COLOR = '#ec407a'; /* lighter pink */
+const SECOND_USER_COLOR = '#5c8fd6'; /* lighter blue */
 
 const toYMD = (d: Date) => {
   const y = d.getFullYear();

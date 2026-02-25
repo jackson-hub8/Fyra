@@ -340,6 +340,19 @@
   font-weight: bold;
 }
 
+/* Fixed bottom nav on all profile/unmatched pages */
+.profile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+}
+
+.profile-page .profile-main {
+  padding-bottom: 72px;
+}
+
 .profile-error {
   background: #fee;
   color: #c33;

@@ -2,13 +2,31 @@
 /// Jackson Hurley, Kaitlyn Maes, Cam Horine
 /// Profile setup: 24 private questions (1–24).
 
+export type AllergyCategory = {
+  category: string;
+  options: { value: string; label: string }[];
+};
+
+export type SportCategory = {
+  category: string;
+  options: { value: string; label: string }[];
+};
+
 export type QuestionDef = {
   id: keyof PrivateQuestionnairePayload;
   label: string;
   required: boolean;
-  type: 'text' | 'textarea' | 'select' | 'tel';
+  type: 'text' | 'textarea' | 'select' | 'tel' | 'allergies' | 'sports' | 'tags' | 'checklist';
   options?: { value: string; label: string }[];
   placeholder?: string;
+  /** For type 'allergies': grouped checklist options. Last option may be "Other" and show a text input. */
+  allergyCategories?: AllergyCategory[];
+  /** For type 'sports': multi-select with categories. Use "None" as mutually exclusive option. */
+  sportCategories?: SportCategory[];
+  /** For type 'checklist': multi-select with maxSelections; singleChoiceValue (e.g. NA) is mutually exclusive. */
+  checklistOptions?: { value: string; label: string }[];
+  maxSelections?: number;
+  singleChoiceValue?: string;
 };
 
 export type PrivateQuestionnairePayload = {
@@ -17,6 +35,7 @@ export type PrivateQuestionnairePayload = {
   animalAllergies: string;
   varsitySport: string;
   smoking: string;
+  cannabis: string;
   alcohol: string;
   roomTemp: string;
   bedroomDescription: string;
@@ -65,20 +84,61 @@ export const PROFILE_QUESTIONS: QuestionDef[][] = [
     },
     {
       id: 'animalAllergies',
-      label: 'Please indicate if you have any allergies: *',
+      label: 'Do you have any allergies? *',
       required: true,
-      type: 'textarea',
-      placeholder: 'e.g. cats, dogs, none',
+      type: 'allergies',
+      allergyCategories: [
+        {
+          category: '',
+          options: [
+            { value: 'Cats', label: 'Cats' },
+            { value: 'Dogs', label: 'Dogs' },
+            { value: 'Smoke (cigarette or cannabis)', label: 'Smoke (cigarette or cannabis)' },
+          ],
+        },
+        {
+          category: '',
+          options: [
+            { value: 'Peanuts / tree nuts', label: 'Peanuts / tree nuts' },
+            { value: 'Shellfish', label: 'Shellfish' },
+            { value: 'Dairy', label: 'Dairy' },
+            { value: 'Gluten', label: 'Gluten' },
+          ],
+        },
+        {
+          category: '',
+          options: [{ value: 'Other', label: 'Other (please specify)' }],
+        },
+        {  category: '',  options: [{ value: 'None', label: 'None' }],},
+      ],
     },
     {
       id: 'varsitySport',
-      label: 'Are you a member of a varsity sport or special program at Transy? *',
+      label: 'Select the sports you are a member of: *',
       required: true,
-      type: 'select',
-      options: [
-        { value: '', label: 'Select...' },
-        { value: 'No', label: 'No' },
-        { value: 'Yes', label: 'Yes' },
+      type: 'sports',
+      sportCategories: [
+        {
+          category: '',
+          options: [
+            { value: 'Baseball', label: 'Baseball' },
+            { value: 'Basketball', label: 'Basketball' },
+            { value: 'Cross Country', label: 'Cross Country' },
+            { value: 'Golf', label: 'Golf' },
+            { value: 'Lacrosse', label: 'Lacrosse' },
+            { value: 'Soccer', label: 'Soccer' },
+            { value: 'Swimming & Diving', label: 'Swimming & Diving' },
+            { value: 'Tennis', label: 'Tennis' },
+            { value: 'Track & Field', label: 'Track & Field' },
+            { value: 'Cheerleading', label: 'Cheerleading' },
+            { value: 'Dance', label: 'Dance' },
+            { value: 'Eventing', label: 'Eventing' },
+            { value: 'Esports', label: 'Esports' },
+            { value: 'Field Hockey', label: 'Field Hockey' },
+            { value: 'Softball', label: 'Softball' },
+            { value: 'None', label: 'None' },
+          ],
+        },
       ],
     },
   ],
@@ -86,7 +146,19 @@ export const PROFILE_QUESTIONS: QuestionDef[][] = [
     {
       id: 'smoking',
       label:
-        'Although smoking is not permitted inside the residence halls, we attempt to place smokers together because of potential allergies. What are you? *',
+        'Although smoking is not permitted inside the residence halls, we attempt to place smokers together because of potential allergies. Nicotine (cigarettes/Vapes)? *',
+      required: true,
+      type: 'select',
+      options: [
+        { value: '', label: 'Select...' },
+        { value: 'Non-smoker', label: 'Non-smoker' },
+        { value: 'Smoker', label: 'Smoker' },
+      ],
+    },
+    {
+      id: 'cannabis',
+      label:
+        'Cannabis? *',
       required: true,
       type: 'select',
       options: [
@@ -127,10 +199,10 @@ export const PROFILE_QUESTIONS: QuestionDef[][] = [
       type: 'select',
       options: [
         { value: '', label: 'Select...' },
-        { value: 'Very organized', label: 'Very organized' },
-        { value: 'Organized', label: 'Organized' },
-        { value: 'Disorganized but not messy', label: 'Disorganized but not messy' },
         { value: 'Messy', label: 'Messy' },
+        { value: 'Disorganized but not messy', label: 'Disorganized but not messy' },
+        { value: 'Organized', label: 'Organized' },
+        { value: 'Very organized', label: 'Very organized' },
       ],
     },
     {
@@ -165,7 +237,7 @@ export const PROFILE_QUESTIONS: QuestionDef[][] = [
       id: 'freeTime',
       label: 'How would you prefer to spend your free time? *',
       required: true,
-      type: 'textarea',
+      type: 'tags',
       placeholder: 'e.g. Reading, Cooking, Football, History',
     },
     {
@@ -175,10 +247,10 @@ export const PROFILE_QUESTIONS: QuestionDef[][] = [
       type: 'select',
       options: [
         { value: '', label: 'Select...' },
-        { value: 'Very active', label: 'Very active' },
-        { value: 'Moderately active', label: 'Moderately active' },
-        { value: 'Somewhat active', label: 'Somewhat active' },
         { value: 'Not very active', label: 'Not very active' },
+        { value: 'Somewhat active', label: 'Somewhat active' },
+        { value: 'Moderately active', label: 'Moderately active' },
+        { value: 'Very active', label: 'Very active' },
       ],
     },
     {
@@ -201,11 +273,11 @@ export const PROFILE_QUESTIONS: QuestionDef[][] = [
       type: 'select',
       options: [
         { value: '', label: 'Select...' },
-        { value: 'Almost every weekend', label: 'Almost every weekend' },
-        { value: 'Often', label: 'Often' },
-        { value: 'Sometimes', label: 'Sometimes' },
-        { value: 'Rarely', label: 'Rarely' },
         { value: 'Never', label: 'Never' },
+        { value: 'Rarely', label: 'Rarely' },
+        { value: 'Sometimes', label: 'Sometimes' },
+        { value: 'Often', label: 'Often' },
+        { value: 'Almost every weekend', label: 'Almost every weekend' },
       ],
     },
     {
@@ -284,12 +356,76 @@ export const PROFILE_QUESTIONS: QuestionDef[][] = [
       id: 'intendedMajor',
       label: 'What is your intended major? If unsure, put NA. *',
       required: true,
-      type: 'text',
-      placeholder: 'e.g. Mathematics, NA',
+      type: 'checklist',
+      maxSelections: 3,
+      singleChoiceValue: 'NA',
+      checklistOptions: [
+        { value: 'Accounting', label: 'Accounting' },
+        { value: 'Anthropology', label: 'Anthropology' },
+        { value: 'Art History', label: 'Art History' },
+        { value: 'Art, Teaching', label: 'Art, Teaching' },
+        { value: 'Biology', label: 'Biology' },
+        { value: 'Biology: Ecology, Evolution, and Behavior Track', label: 'Biology: Ecology, Evolution, and Behavior Track' },
+        { value: 'Biology: Molecular and Cellular Track', label: 'Biology: Molecular and Cellular Track' },
+        { value: 'Business Administration', label: 'Business Administration' },
+        { value: 'Business Administration: Finance Track', label: 'Business Administration: Finance Track' },
+        { value: 'Business Administration: Hospitality and Tourism Track', label: 'Business Administration: Hospitality and Tourism Track' },
+        { value: 'Business Administration: Management Track', label: 'Business Administration: Management Track' },
+        { value: 'Business Administration: Marketing Track', label: 'Business Administration: Marketing Track' },
+        { value: 'Business Administration: Sport Management Track', label: 'Business Administration: Sport Management Track' },
+        { value: 'Chemistry', label: 'Chemistry' },
+        { value: 'Chemistry, Teaching', label: 'Chemistry, Teaching' },
+        { value: 'Chemistry: Biochemistry Track', label: 'Chemistry: Biochemistry Track' },
+        { value: 'Chinese', label: 'Chinese' },
+        { value: 'Classics', label: 'Classics' },
+        { value: 'Computer Science', label: 'Computer Science' },
+        { value: 'Digital Arts and Media', label: 'Digital Arts and Media' },
+        { value: 'Economics', label: 'Economics' },
+        { value: 'Education', label: 'Education' },
+        { value: 'Education and Social Change', label: 'Education and Social Change' },
+        { value: 'English', label: 'English' },
+        { value: 'French', label: 'French' },
+        { value: 'Health and Exercise Science', label: 'Health and Exercise Science' },
+        { value: 'History', label: 'History' },
+        { value: 'International Affairs', label: 'International Affairs' },
+        { value: 'Mathematics', label: 'Mathematics' },
+        { value: 'Music Education', label: 'Music Education' },
+        { value: 'Music Performance', label: 'Music Performance' },
+        { value: 'Music Studies', label: 'Music Studies' },
+        { value: 'Music Technology', label: 'Music Technology' },
+        { value: 'Neuroscience', label: 'Neuroscience' },
+        { value: 'Philosophy', label: 'Philosophy' },
+        { value: 'Philosophy, Politics & Economics', label: 'Philosophy, Politics & Economics' },
+        { value: 'Physics', label: 'Physics' },
+        { value: 'Political Science', label: 'Political Science' },
+        { value: 'Psychology', label: 'Psychology' },
+        { value: 'Religion', label: 'Religion' },
+        { value: 'Self-designed', label: 'Self-designed' },
+        { value: 'Sociology', label: 'Sociology' },
+        { value: 'Sociology/Anthropology', label: 'Sociology/Anthropology' },
+        { value: 'Spanish', label: 'Spanish' },
+        { value: 'Studio Art', label: 'Studio Art' },
+        { value: 'Theater Arts', label: 'Theater Arts' },
+        { value: 'Theater Design and Technology', label: 'Theater Design and Technology' },
+        { value: 'Theater Performance', label: 'Theater Performance' },
+        { value: 'Writing, Rhetoric, and Communication', label: 'Writing, Rhetoric, and Communication' },
+        { value: 'Pre-Engineering Program', label: 'Pre-Engineering Program' },
+        { value: 'Pre-Dental', label: 'Pre-Dental' },
+        { value: 'Pre-Medical', label: 'Pre-Medical' },
+        { value: 'Pre-Nursing', label: 'Pre-Nursing' },
+        { value: 'Pre-Occupational Therapy', label: 'Pre-Occupational Therapy' },
+        { value: 'Pre-Pharmacy', label: 'Pre-Pharmacy' },
+        { value: 'Pre-Physical Therapy', label: 'Pre-Physical Therapy' },
+        { value: 'Pre-Physician Assistant/Associate', label: 'Pre-Physician Assistant/Associate' },
+        { value: 'Pre-Public Health', label: 'Pre-Public Health' },
+        { value: 'Pre-Veterinary Medicine', label: 'Pre-Veterinary Medicine' },
+        { value: 'Pre-Law Program', label: 'Pre-Law Program' },
+        { value: 'NA', label: 'NA' },
+      ],
     },
     {
       id: 'vehicleToCampus',
-      label: 'Do you plan to bring a vehicle to campus? *',
+      label: 'Do you plan to bring a multi-passenger vehicle to campus? *',
       required: true,
       type: 'select',
       options: [
