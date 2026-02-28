@@ -48,6 +48,59 @@
   object-fit: cover;
 }
 
+.profile-photo-file-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.profile-photo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-photo-upload,
+.btn-photo-remove {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  border: none;
+}
+
+.btn-photo-upload {
+  background: #a12d2e;
+  color: white;
+}
+
+.btn-photo-upload:hover:not(:disabled),
+.btn-photo-remove:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn-photo-upload:disabled,
+.btn-photo-remove:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-photo-remove {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.profile-photo-error {
+  color: #c33;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
 .profile-bio {
   font-size: 14px;
   line-height: 1.5;
@@ -58,7 +111,6 @@
 .profile-details h3 {
   font-size: 14px;
   font-weight: bold;
-  font-style: italic;
   margin: 0 0 8px 0;
   color: #333;
 }
@@ -196,9 +248,13 @@
 }
 
 .profile-edit-actions {
+  grid-column: 1 / -1;
   display: flex;
+  justify-content: flex-end;
   gap: 12px;
-  margin-top: 20px;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
 }
 
 .profile-edit-actions button {

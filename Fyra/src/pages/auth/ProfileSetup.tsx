@@ -2,7 +2,7 @@
 /// Jackson Hurley, Kaitlyn Maes, Cam Horine
 /// Profile setup: 24 private questions (multi-page) + build profile (bio, interests, daily life, pet peeves).
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { PROFILE_QUESTIONS } from '../../config/profileQuestions';
@@ -88,6 +88,7 @@ export default function ProfileSetup() {
   const [tagInputByQuestionId, setTagInputByQuestionId] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.email) {
@@ -95,6 +96,23 @@ export default function ProfileSetup() {
       return;
     }
   }, [user, navigate]);
+
+  const fetchBuildProfilePicture = useCallback(async () => {
+    if (!user?.email) return;
+    try {
+      const res = await fetch(`/api/profiles/profiles?email=${encodeURIComponent(user.email)}`);
+      if (res.ok) {
+        const data = (await res.json()) as { profilePicture?: string | null };
+        setProfilePicture(data.profilePicture ?? null);
+      }
+    } catch {
+      // keep null
+    }
+  }, [user?.email]);
+
+  useEffect(() => {
+    if (buildProfile) fetchBuildProfilePicture();
+  }, [buildProfile, fetchBuildProfilePicture]);
 
   const isQuestionPage = !buildProfile;
   const currentQuestions = isQuestionPage ? PROFILE_QUESTIONS[page] : [];
@@ -316,10 +334,16 @@ export default function ProfileSetup() {
         <h2 className="form-title">
           {buildProfile ? 'Build your profile' : `Profile setup (${page + 1} of ${TOTAL_QUESTION_PAGES})`}
         </h2>
+        <p className="form-title-subtitle">
+          {buildProfile ? 'This will be public' : 'Your answers will remain private'}
+        </p>
         {error && <div className="error-message">{error}</div>}
 
         {buildProfile ? (
           <ProfileCardSetup
+            email={user.email}
+            profilePicture={profilePicture}
+            onProfilePictureChange={setProfilePicture}
             bio={bio}
             onBioChange={setBio}
             topInterests={topInterests}
