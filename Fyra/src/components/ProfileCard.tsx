@@ -151,6 +151,7 @@ export default function ProfileCard({ email }: { email: string }) {
     setPetPeeveInput('');
     setEditing(false);
     setError('');
+    setPhotoError('');
   };
 
   const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -232,35 +233,39 @@ export default function ProfileCard({ email }: { email: string }) {
                 'PHOTO'
               )}
             </div>
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept="image/jpeg,image/png,image/webp"
-              className="profile-photo-file-input"
-              aria-label="Upload profile photo"
-              onChange={handlePhotoFile}
-            />
-            <div className="profile-photo-actions">
-              <button
-                type="button"
-                className="btn-photo-upload"
-                disabled={photoUploading}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {photoUploading ? 'Uploading…' : profile.profilePicture ? 'Change photo' : 'Upload photo'}
-              </button>
-              {profile.profilePicture && (
-                <button
-                  type="button"
-                  className="btn-photo-remove"
-                  disabled={photoUploading}
-                  onClick={handleRemovePhoto}
-                >
-                  Remove photo
-                </button>
-              )}
-            </div>
-            {photoError && <div className="profile-photo-error">{photoError}</div>}
+            {editing && (
+              <>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/jpeg,image/png,image/webp"
+                  className="profile-photo-file-input"
+                  aria-label="Upload profile photo"
+                  onChange={handlePhotoFile}
+                />
+                <div className="profile-photo-actions">
+                  <button
+                    type="button"
+                    className="btn-photo-upload"
+                    disabled={photoUploading}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {photoUploading ? 'Uploading…' : profile.profilePicture ? 'Change photo' : 'Upload photo'}
+                  </button>
+                  {profile.profilePicture && (
+                    <button
+                      type="button"
+                      className="btn-photo-remove"
+                      disabled={photoUploading}
+                      onClick={handleRemovePhoto}
+                    >
+                      Remove photo
+                    </button>
+                  )}
+                </div>
+                {photoError && <div className="profile-photo-error">{photoError}</div>}
+              </>
+            )}
             {editing ? (
               <div className="profile-edit-form">
                 <label>Bio</label>
