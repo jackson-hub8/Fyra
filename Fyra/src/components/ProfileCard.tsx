@@ -360,14 +360,6 @@ export default function ProfileCard({ email }: { email: string }) {
                     </button>
                   </div>
                 </div>
-                <div className="profile-edit-actions">
-                  <button type="button" className="btn-cancel" onClick={cancelEdit} disabled={saving}>
-                    Cancel
-                  </button>
-                  <button type="button" className="btn-save" onClick={saveEdit} disabled={saving}>
-                    {saving ? 'Saving…' : 'Save'}
-                  </button>
-                </div>
               </>
             ) : (
               <>
@@ -406,6 +398,16 @@ export default function ProfileCard({ email }: { email: string }) {
               </>
             )}
           </div>
+          {editing && (
+            <div className="profile-edit-actions">
+              <button type="button" className="btn-cancel" onClick={cancelEdit} disabled={saving}>
+                Cancel
+              </button>
+              <button type="button" className="btn-save" onClick={saveEdit} disabled={saving}>
+                {saving ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

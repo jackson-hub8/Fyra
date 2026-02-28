@@ -249,9 +249,13 @@
 }
 
 .profile-edit-actions {
+  grid-column: 1 / -1;
   display: flex;
+  justify-content: flex-end;
   gap: 12px;
-  margin-top: 20px;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
 }
 
 .profile-edit-actions button {
