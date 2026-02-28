@@ -49,8 +49,26 @@ model UserProfiles {
 
   // Relations
   user Users @relation(fields: [userEmail], references: [email], onDelete: Cascade)
+  profilePhoto UserProfilePhotos?
 
   @@map("user_profiles")
+}
+
+model UserProfilePhotos {
+  id          Int      @id @default(autoincrement())
+  userEmail   String   @unique @db.VarChar(255)
+  blobUrl     String   @db.VarChar(2048)
+  blobPathname String  @db.VarChar(512)
+  contentType String?  @db.VarChar(100)
+  sizeBytes   Int?
+  width       Int?
+  height      Int?
+  createdAt   DateTime @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime @updatedAt @db.Timestamp(6)
+
+  userProfile UserProfiles @relation(fields: [userEmail], references: [userEmail], onDelete: Cascade)
+
+  @@map("user_profile_photos")
 }
 
 model PublicPreferences {

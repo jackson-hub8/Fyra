@@ -2,7 +2,7 @@
 /// Jackson Hurley, Kaitlyn Maes, Cam Horine
 /// Profile card: view/edit bio, photo, interests, daily life, pet peeves.
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import './ProfileCard.css';
 
 type ProfileData = {
@@ -30,6 +30,9 @@ export default function ProfileCard({ email }: { email: string }) {
   const [editPetPeeves, setEditPetPeeves] = useState<string[]>([]);
   const [petPeeveInput, setPetPeeveInput] = useState('');
   const [saving, setSaving] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchProfile = useCallback(async () => {
     if (!email) return;
@@ -150,6 +153,69 @@ export default function ProfileCard({ email }: { email: string }) {
     setError('');
   };
 
+  const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+  const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
+
+  const handlePhotoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !email) return;
+    setPhotoError('');
+    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
+      setPhotoError('Use JPEG, PNG, or WebP.');
+      return;
+    }
+    if (file.size > MAX_PHOTO_BYTES) {
+      setPhotoError('File too large. Max 4MB.');
+      return;
+    }
+    setPhotoUploading(true);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => {
+          const data = (r.result as string) ?? '';
+          const i = data.indexOf(',');
+          resolve(i >= 0 ? data.slice(i + 1) : data);
+        };
+        r.onerror = () => reject(new Error('Read failed'));
+        r.readAsDataURL(file);
+      });
+      const res = await fetch('/api/profiles/photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, photo: base64, contentType: file.type }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string; photoUrl?: string };
+      if (!res.ok) {
+        throw new Error(data.error ?? 'Upload failed');
+      }
+      setProfile((prev) => (prev ? { ...prev, profilePicture: data.photoUrl ?? prev.profilePicture } : null));
+    } catch (err) {
+      setPhotoError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
+  const handleRemovePhoto = async () => {
+    if (!email) return;
+    setPhotoError('');
+    setPhotoUploading(true);
+    try {
+      const res = await fetch(`/api/profiles/photo?email=${encodeURIComponent(email)}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error ?? 'Remove failed');
+      }
+      setProfile((prev) => (prev ? { ...prev, profilePicture: null } : null));
+    } catch (err) {
+      setPhotoError(err instanceof Error ? err.message : 'Remove failed');
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
   if (!email) return null;
 
   return (
@@ -166,6 +232,35 @@ export default function ProfileCard({ email }: { email: string }) {
                 'PHOTO'
               )}
             </div>
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/jpeg,image/png,image/webp"
+              className="profile-photo-file-input"
+              aria-label="Upload profile photo"
+              onChange={handlePhotoFile}
+            />
+            <div className="profile-photo-actions">
+              <button
+                type="button"
+                className="btn-photo-upload"
+                disabled={photoUploading}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {photoUploading ? 'Uploading…' : profile.profilePicture ? 'Change photo' : 'Upload photo'}
+              </button>
+              {profile.profilePicture && (
+                <button
+                  type="button"
+                  className="btn-photo-remove"
+                  disabled={photoUploading}
+                  onClick={handleRemovePhoto}
+                >
+                  Remove photo
+                </button>
+              )}
+            </div>
+            {photoError && <div className="profile-photo-error">{photoError}</div>}
             {editing ? (
               <div className="profile-edit-form">
                 <label>Bio</label>
