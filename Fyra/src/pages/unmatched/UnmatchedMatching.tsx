@@ -145,7 +145,7 @@ export default function UnmatchedMatching() {
       {!loading && noMoreCards && (
         <div className="matching-empty">
           <p>No more profiles to review.</p>
-          <p className="matching-empty-hint">Check back later or update your profile.</p>
+          <p className="matching-empty-hint">Check back later</p>
         </div>
       )}
       {!loading && !noMoreCards && currentEmail && (
