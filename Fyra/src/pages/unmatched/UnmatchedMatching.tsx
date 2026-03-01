@@ -1,5 +1,5 @@
 /// file: UnmatchedMatching.tsx
-/// Matching page: swipeable profile cards, like/pass buttons, only unmatched users.
+/// Tinder-style matching: card stack, drag tilt, like/pass overlays, fly-off animations.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +8,7 @@ import ProfileCard from '../../components/ProfileCard';
 import './UnmatchedMatching.css';
 
 const SWIPE_THRESHOLD_PX = 80;
+const FLY_OFF_DURATION_MS = 280;
 
 export default function UnmatchedMatching() {
   const { user } = useAuth();
@@ -18,10 +19,13 @@ export default function UnmatchedMatching() {
   const [error, setError] = useState('');
   const [swiping, setSwiping] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
+  const [exitDirection, setExitDirection] = useState<'left' | 'right' | null>(null);
+  const [pointerDown, setPointerDown] = useState(false);
   const dragStartRef = useRef<number>(0);
   const dragOffsetRef = useRef<number>(0);
 
   const currentEmail = deck[currentIndex] ?? null;
+  const nextEmails = [deck[currentIndex + 1], deck[currentIndex + 2]].filter(Boolean) as string[];
 
   const fetchDeck = useCallback(async () => {
     if (!user?.email) return;
@@ -67,7 +71,7 @@ export default function UnmatchedMatching() {
             action,
           }),
         });
-        const data = await res.json().catch(() => ({})) as { error?: string };
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
         if (!res.ok) throw new Error(data.error || 'Swipe failed');
         setCurrentIndex((i) => i + 1);
       } catch (e) {
@@ -75,41 +79,58 @@ export default function UnmatchedMatching() {
       } finally {
         setSwiping(false);
         setDragOffset(0);
+        setExitDirection(null);
       }
     },
     [user?.email, currentEmail, swiping]
   );
 
-  const handlePass = useCallback(() => performSwipe('pass'), [performSwipe]);
-  const handleLike = useCallback(() => performSwipe('like'), [performSwipe]);
+  const triggerSwipe = useCallback(
+    (action: 'like' | 'pass') => {
+      if (!currentEmail || swiping || exitDirection) return;
+      setExitDirection(action === 'like' ? 'right' : 'left');
+    },
+    [currentEmail, swiping, exitDirection]
+  );
+
+  useEffect(() => {
+    if (!exitDirection) return;
+    const t = setTimeout(() => {
+      performSwipe(exitDirection === 'right' ? 'like' : 'pass');
+    }, FLY_OFF_DURATION_MS);
+    return () => clearTimeout(t);
+  }, [exitDirection, performSwipe]);
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    if (exitDirection) return;
+    setPointerDown(true);
     dragStartRef.current = e.clientX;
     dragOffsetRef.current = 0;
     (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
-  }, []);
+  }, [exitDirection]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (e.buttons === 0) return;
+    if (e.buttons === 0 || exitDirection) return;
     const delta = e.clientX - dragStartRef.current;
     dragOffsetRef.current = delta;
     setDragOffset(delta);
-  }, []);
+  }, [exitDirection]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
     (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+    setPointerDown(false);
     const offset = dragOffsetRef.current;
     setDragOffset(0);
     dragOffsetRef.current = 0;
     dragStartRef.current = 0;
-    if (Math.abs(offset) >= SWIPE_THRESHOLD_PX && currentEmail && !swiping) {
-      if (offset > 0) performSwipe('like');
-      else performSwipe('pass');
+    if (Math.abs(offset) >= SWIPE_THRESHOLD_PX && currentEmail && !swiping && !exitDirection) {
+      setExitDirection(offset > 0 ? 'right' : 'left');
     }
-  }, [currentEmail, swiping, performSwipe]);
+  }, [currentEmail, swiping, exitDirection]);
 
   const handlePointerCancel = useCallback((e: React.PointerEvent) => {
     (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+    setPointerDown(false);
     setDragOffset(0);
     dragOffsetRef.current = 0;
     dragStartRef.current = 0;
@@ -117,7 +138,9 @@ export default function UnmatchedMatching() {
 
   useEffect(() => {
     const onPointerUp = () => {
+      setPointerDown(false);
       setDragOffset(0);
+      dragOffsetRef.current = 0;
       dragStartRef.current = 0;
     };
     window.addEventListener('pointerup', onPointerUp);
@@ -131,6 +154,10 @@ export default function UnmatchedMatching() {
   if (!user?.email) return null;
 
   const noMoreCards = !loading && (deck.length === 0 || currentIndex >= deck.length);
+  const showOverlayLike = !exitDirection && dragOffset > SWIPE_THRESHOLD_PX;
+  const showOverlayPass = !exitDirection && dragOffset < -SWIPE_THRESHOLD_PX;
+  const overlayOpacity = Math.min(1, (Math.abs(dragOffset) - SWIPE_THRESHOLD_PX) / 80);
+  const overlayStyle = { opacity: showOverlayLike || showOverlayPass ? overlayOpacity : 0 };
 
   return (
     <div className="matching-page">
@@ -148,26 +175,57 @@ export default function UnmatchedMatching() {
           <p className="matching-empty-hint">Check back later</p>
         </div>
       )}
-      {!loading && !noMoreCards && currentEmail && (
+      {!loading && !noMoreCards && (
         <>
-          <div
-            className="matching-card-container"
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerLeave={handlePointerCancel}
-            style={{ '--matching-drag-offset': `${dragOffset}px` } as React.CSSProperties}
-          >
-            <div className="matching-card-inner">
-              <ProfileCard email={currentEmail} readOnly />
-            </div>
+          <div className="matching-stack">
+            {/* Back cards (next in stack) */}
+            {nextEmails.map((email, i) => (
+              <div
+                key={email}
+                className="matching-stack-card matching-stack-card-back"
+                style={{ '--stack-index': i + 1 } as React.CSSProperties}
+              >
+                <div className="matching-stack-card-inner">
+                  <ProfileCard email={email} readOnly />
+                </div>
+              </div>
+            ))}
+            {/* Top card (active, draggable) */}
+            {currentEmail && (
+              <div
+                className={`matching-stack-card matching-stack-card-top ${exitDirection ? `matching-card-exit-${exitDirection}` : ''}`}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerLeave={handlePointerCancel}
+                style={{
+                  '--matching-drag-offset': `${dragOffset}px`,
+                  '--matching-drag-rotate': `${dragOffset * 0.03}deg`,
+                  transition: pointerDown ? 'none' : undefined,
+                } as React.CSSProperties}
+              >
+                <div className="matching-stack-card-inner">
+                  {showOverlayLike && (
+                    <div className="matching-card-overlay matching-card-overlay-like" style={overlayStyle} aria-hidden>
+                      <span className="matching-overlay-icon">✓</span>
+                    </div>
+                  )}
+                  {showOverlayPass && (
+                    <div className="matching-card-overlay matching-card-overlay-pass" style={overlayStyle} aria-hidden>
+                      <span className="matching-overlay-icon">×</span>
+                    </div>
+                  )}
+                  <ProfileCard email={currentEmail} readOnly />
+                </div>
+              </div>
+            )}
           </div>
           <div className="matching-actions">
             <button
               type="button"
               className="matching-btn matching-btn-pass"
-              onClick={handlePass}
-              disabled={swiping}
+              onClick={() => triggerSwipe('pass')}
+              disabled={swiping || !!exitDirection}
               aria-label="Pass"
             >
               <span aria-hidden>×</span>
@@ -175,8 +233,8 @@ export default function UnmatchedMatching() {
             <button
               type="button"
               className="matching-btn matching-btn-like"
-              onClick={handleLike}
-              disabled={swiping}
+              onClick={() => triggerSwipe('like')}
+              disabled={swiping || !!exitDirection}
               aria-label="Like"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>

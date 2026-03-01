@@ -1,4 +1,4 @@
-/* Matching page: card + like/pass buttons, mobile-first */
+/* Tinder-style matching: stack, overlays, fly-off */
 
 .matching-page {
   flex: 1;
@@ -32,38 +32,131 @@
   color: #666;
 }
 
-.matching-card-container {
+/* Card stack: back cards then top card */
+.matching-stack {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
+  padding-bottom: 8px;
+}
+
+.matching-stack-card {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 100%;
+  max-width: 900px;
+  height: 100%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+
+.matching-stack-card-top {
+  pointer-events: auto;
   touch-action: pan-y;
   cursor: grab;
   user-select: none;
 }
 
-.matching-card-container:active {
+.matching-stack-card-top:active {
   cursor: grabbing;
 }
 
-.matching-card-inner {
-  width: 100%;
-  max-width: 900px;
-  transform: translateX(var(--matching-drag-offset, 0));
-  transition: transform 0.1s ease-out;
+/* Back cards: scaled down and offset downward */
+.matching-stack-card-back {
+  --stack-scale: calc(1 - (var(--stack-index, 1) * 0.04));
+  --stack-y: calc(var(--stack-index, 1) * 12px);
+  transform: translateX(-50%) translateY(var(--stack-y)) scale(var(--stack-scale));
+  z-index: 0;
+}
+
+.matching-stack-card-back:nth-child(1) {
+  --stack-index: 1;
+  z-index: 1;
+}
+
+.matching-stack-card-back:nth-child(2) {
+  --stack-index: 2;
+  z-index: 0;
+}
+
+/* Top card: drag transform + optional exit */
+.matching-stack-card-top {
+  z-index: 2;
+  transform: translateX(calc(-50% + var(--matching-drag-offset, 0))) rotate(var(--matching-drag-rotate, 0deg));
+  transition: transform 0.28s ease-out;
+}
+
+.matching-stack-card-top.matching-card-exit-right {
+  transform: translateX(calc(-50% + 150%)) rotate(15deg);
+  pointer-events: none;
+}
+
+.matching-stack-card-top.matching-card-exit-left {
+  transform: translateX(calc(-50% - 150%)) rotate(-15deg);
+  pointer-events: none;
+}
+
+.matching-stack-card-inner {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
 }
 
-.matching-card-inner .profile-card-wrap {
+.matching-stack-card-inner .profile-card-wrap {
   flex: 1;
   min-height: 0;
   padding: 0;
+  background: white;
 }
 
+/* Like/Pass overlays on top card */
+.matching-card-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  pointer-events: none;
+  border: 4px solid currentColor;
+}
+
+.matching-card-overlay-like {
+  background: rgba(46, 125, 50, 0.25);
+  color: #2e7d32;
+}
+
+.matching-card-overlay-pass {
+  background: rgba(198, 40, 40, 0.25);
+  color: #c62828;
+}
+
+.matching-overlay-icon {
+  font-size: 72px;
+  font-weight: bold;
+  line-height: 1;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 700px) {
+  .matching-overlay-icon {
+    font-size: 56px;
+  }
+}
+
+/* Action buttons */
 .matching-actions {
   display: flex;
   justify-content: center;
