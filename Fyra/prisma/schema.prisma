@@ -145,6 +145,19 @@ model PetPeeves {
   @@map("pet_peeves")
 }
 
+model SwipeActions {
+  id          Int      @id @default(autoincrement())
+  swiperEmail String   @db.VarChar(255)
+  targetEmail String   @db.VarChar(255)
+  action      String   @db.VarChar(10) // 'like' | 'pass'
+  createdAt   DateTime @default(now()) @db.Timestamp(6)
+
+  @@unique([swiperEmail, targetEmail])
+  @@index([swiperEmail])
+  @@index([targetEmail])
+  @@map("swipe_actions")
+}
+
 model Matches {
   id         Int      @id @default(autoincrement())
   userEmail1 String   @db.VarChar(255)
