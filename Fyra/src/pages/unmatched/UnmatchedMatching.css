@@ -5,8 +5,9 @@
   display: flex;
   flex-direction: column;
   padding: 20px;
-  overflow: hidden;
   min-height: 0;
+  /* Visible so swiped card isn't clipped when rotated */
+  overflow: visible;
 }
 
 .matching-loading,
@@ -36,11 +37,12 @@
 .matching-stack {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-bottom: 8px;
+  padding: 24px 16px 48px;
+  /* Visible so rotated card isn't clipped when swiping; no scrollbar */
+  overflow: visible;
 }
 
 .matching-stack-wrapper {
@@ -48,6 +50,9 @@
   width: 100%;
   max-width: 900px;
   margin: 0 auto;
+  overflow: visible;
+  /* Extra padding so rotated card has room and doesn't get clipped by parent */
+  padding: 24px 0;
 }
 
 .matching-stack-card {
@@ -99,6 +104,7 @@
   z-index: 2;
   height: auto;
   pointer-events: auto;
+  overflow: visible;
   transform: translateX(var(--matching-drag-offset, 0)) rotate(var(--matching-drag-rotate, 0deg));
   transition: transform 0.28s ease-out;
 }
