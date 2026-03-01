@@ -178,20 +178,21 @@ export default function UnmatchedMatching() {
       {!loading && !noMoreCards && (
         <>
           <div className="matching-stack">
-            {/* Back cards (next in stack) */}
-            {nextEmails.map((email, i) => (
-              <div
-                key={email}
-                className="matching-stack-card matching-stack-card-back"
-                style={{ '--stack-index': i + 1 } as React.CSSProperties}
-              >
-                <div className="matching-stack-card-inner">
-                  <ProfileCard email={email} readOnly />
+            <div className="matching-stack-wrapper">
+              {/* Back cards (next in stack) - absolute so they sit behind */}
+              {nextEmails.map((email, i) => (
+                <div
+                  key={email}
+                  className="matching-stack-card matching-stack-card-back"
+                  style={{ '--stack-index': i + 1 } as React.CSSProperties}
+                >
+                  <div className="matching-stack-card-inner">
+                    <ProfileCard email={email} readOnly />
+                  </div>
                 </div>
-              </div>
-            ))}
-            {/* Top card (active, draggable) */}
-            {currentEmail && (
+              ))}
+              {/* Top card (in flow so wrapper height = content height; draggable) */}
+              {currentEmail && (
               <div
                 className={`matching-stack-card matching-stack-card-top ${exitDirection ? `matching-card-exit-${exitDirection}` : ''}`}
                 onPointerDown={handlePointerDown}
@@ -219,6 +220,7 @@ export default function UnmatchedMatching() {
                 </div>
               </div>
             )}
+            </div>
           </div>
           <div className="matching-actions">
             <button

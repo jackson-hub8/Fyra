@@ -32,28 +32,44 @@
   color: #666;
 }
 
-/* Card stack: back cards then top card. Min-height so absolute children have a height to fill. */
+/* Card stack: wrapper sizes to top card (in flow); back cards absolute behind it. */
 .matching-stack {
   flex: 1;
-  min-height: max(380px, 50vh);
+  min-height: 0;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  position: relative;
   padding-bottom: 8px;
 }
 
-.matching-stack-card {
-  position: absolute;
-  left: 50%;
-  top: 0;
+.matching-stack-wrapper {
+  position: relative;
   width: 100%;
   max-width: 900px;
-  height: 100%;
-  transform: translateX(-50%);
+  margin: 0 auto;
+}
+
+.matching-stack-card {
+  width: 100%;
+  max-width: 900px;
   display: flex;
   flex-direction: column;
   pointer-events: none;
+}
+
+/* Back cards: absolute, fill wrapper height (set by top card), scaled and offset */
+.matching-stack-card-back {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 100%;
+  --stack-scale: calc(1 - (var(--stack-index, 1) * 0.04));
+  --stack-y: calc(var(--stack-index, 1) * 12px);
+  transform: translateY(var(--stack-y)) scale(var(--stack-scale));
+  transform-origin: center top;
+  z-index: 0;
 }
 
 .matching-stack-card-top {
@@ -67,14 +83,6 @@
   cursor: grabbing;
 }
 
-/* Back cards: scaled down and offset downward */
-.matching-stack-card-back {
-  --stack-scale: calc(1 - (var(--stack-index, 1) * 0.04));
-  --stack-y: calc(var(--stack-index, 1) * 12px);
-  transform: translateX(-50%) translateY(var(--stack-y)) scale(var(--stack-scale));
-  z-index: 0;
-}
-
 .matching-stack-card-back:nth-child(1) {
   --stack-index: 1;
   z-index: 1;
@@ -85,26 +93,27 @@
   z-index: 0;
 }
 
-/* Top card: drag transform + optional exit */
+/* Top card: in flow so wrapper height = content; drag transform + optional exit */
 .matching-stack-card-top {
+  position: relative;
   z-index: 2;
-  transform: translateX(calc(-50% + var(--matching-drag-offset, 0))) rotate(var(--matching-drag-rotate, 0deg));
+  height: auto;
+  pointer-events: auto;
+  transform: translateX(var(--matching-drag-offset, 0)) rotate(var(--matching-drag-rotate, 0deg));
   transition: transform 0.28s ease-out;
 }
 
 .matching-stack-card-top.matching-card-exit-right {
-  transform: translateX(calc(-50% + 150%)) rotate(15deg);
+  transform: translateX(150%) rotate(15deg);
   pointer-events: none;
 }
 
 .matching-stack-card-top.matching-card-exit-left {
-  transform: translateX(calc(-50% - 150%)) rotate(-15deg);
+  transform: translateX(-150%) rotate(-15deg);
   pointer-events: none;
 }
 
 .matching-stack-card-inner {
-  flex: 1;
-  min-height: 0;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -113,12 +122,25 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
 }
 
-.matching-stack-card-inner .profile-card-wrap {
+.matching-stack-card-back .matching-stack-card-inner {
   flex: 1;
   min-height: 0;
+}
+
+.matching-stack-card-top .matching-stack-card-inner {
+  flex: 0 0 auto;
+}
+
+.matching-stack-card-inner .profile-card-wrap {
   padding: 16px;
   background: white;
-  overflow-y: auto;
+  overflow: visible;
+}
+
+.matching-stack-card-back .matching-stack-card-inner .profile-card-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* Like/Pass overlays on top card */
