@@ -201,6 +201,7 @@ const Calendar = () => {
           onEdit={handleEdit}
           onDelete={handleDelete}
           getEventColor={getEventColor}
+          canEdit={detailEvent.creatorId?.toLowerCase() === user?.email?.trim()?.toLowerCase()}
         />
       )}
 

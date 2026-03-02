@@ -33,14 +33,15 @@ async function getMatchForUser(email: string) {
   return match;
 }
 
-/** Check that the current user is part of the match that owns this event. */
+/** Check that the current user is part of the match that owns this event. Optionally require user to be the creator (for edit/delete). */
 async function getEventAndMatch(
   eventId: number,
-  userEmail: string
-): Promise<{ event: { id: number; matchId: number }; match: { id: number; userEmail1: string; userEmail2: string } } | null> {
+  userEmail: string,
+  requireCreator = false
+): Promise<{ event: { id: number; matchId: number; creatorEmail: string }; match: { id: number; userEmail1: string; userEmail2: string } } | null> {
   const event = await prisma.calendarEvents.findUnique({
     where: { id: eventId },
-    select: { id: true, matchId: true },
+    select: { id: true, matchId: true, creatorEmail: true },
   });
   if (!event) return null;
   const match = await prisma.matches.findUnique({
@@ -50,6 +51,7 @@ async function getEventAndMatch(
   const isInMatch =
     match.userEmail1 === userEmail || match.userEmail2 === userEmail;
   if (!isInMatch) return null;
+  if (requireCreator && event.creatorEmail !== userEmail) return null;
   return { event, match };
 }
 
@@ -75,8 +77,17 @@ export default async function handler(
         return res.status(200).json({
           events: [],
           matchUserEmails: null,
+          matchUserNames: null,
         });
       }
+      const [user1, user2] = await Promise.all([
+        prisma.users.findUnique({ where: { email: match.userEmail1 }, select: { name: true } }),
+        prisma.users.findUnique({ where: { email: match.userEmail2 }, select: { name: true } }),
+      ]);
+      const matchUserNames = [
+        { email: match.userEmail1, name: user1?.name ?? match.userEmail1 },
+        { email: match.userEmail2, name: user2?.name ?? match.userEmail2 },
+      ];
       const events = await prisma.calendarEvents.findMany({
         where: { matchId: match.id },
         orderBy: [{ startDate: 'asc' }, { startTime: 'asc' }],
@@ -95,6 +106,7 @@ export default async function handler(
       return res.status(200).json({
         events: list,
         matchUserEmails: [match.userEmail1, match.userEmail2],
+        matchUserNames,
       });
     } catch (e) {
       console.error('events GET error:', e);
@@ -165,9 +177,12 @@ export default async function handler(
       if (!Number.isInteger(id) || id < 1) {
         return res.status(400).json({ error: 'Valid event id is required' });
       }
-      const pair = await getEventAndMatch(id, email);
+      const pair = await getEventAndMatch(id, email, false);
       if (!pair) {
         return res.status(404).json({ error: 'Event not found' });
+      }
+      if (pair.event.creatorEmail !== email) {
+        return res.status(403).json({ error: 'Only the event creator can edit this event' });
       }
       const body = req.body as Partial<{
         title: string;
@@ -225,9 +240,12 @@ export default async function handler(
       if (!Number.isInteger(id) || id < 1) {
         return res.status(400).json({ error: 'Valid event id is required' });
       }
-      const pair = await getEventAndMatch(id, email);
+      const pair = await getEventAndMatch(id, email, false);
       if (!pair) {
         return res.status(404).json({ error: 'Event not found' });
+      }
+      if (pair.event.creatorEmail !== email) {
+        return res.status(403).json({ error: 'Only the event creator can delete this event' });
       }
       await prisma.calendarEvents.delete({ where: { id } });
       return res.status(200).json({ success: true });

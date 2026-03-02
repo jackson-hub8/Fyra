@@ -27,7 +27,7 @@ function formatEventTime(ev: CalendarEvent): string {
 const Home = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { getEventsForDate, getEventColor, deleteEvent } = useEvents();
+  const { getEventsForDate, getEventColor, deleteEvent, roomMembers } = useEvents();
   const {
     getChoresForWeek,
     addChore,
@@ -254,8 +254,12 @@ const Home = () => {
           </div>
 
           <div className="roommate-section">
-            <div className="roommate-title">Roommate</div>
-            <div className="roommate-content">roommate</div>
+            <div className="roommate-title">Room</div>
+            <div className="roommate-content">
+              {roomMembers && roomMembers.length > 0
+                ? roomMembers.map((m) => m.name).join(', ')
+                : '—'}
+            </div>
           </div>
         </div>
       </div>
@@ -276,6 +280,7 @@ const Home = () => {
           onEdit={handleEdit}
           onDelete={handleDelete}
           getEventColor={getEventColor}
+          canEdit={detailEvent.creatorId?.toLowerCase() === user?.email?.trim()?.toLowerCase()}
         />
       )}
 

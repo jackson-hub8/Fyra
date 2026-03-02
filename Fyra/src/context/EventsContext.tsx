@@ -23,10 +23,14 @@ export type CalendarEvent = {
   creatorId: string; // email; one color per matched user (user1 vs user2)
 };
 
+export type RoomMember = { email: string; name: string };
+
 type EventsContextValue = {
   events: CalendarEvent[];
   loading: boolean;
   error: string | null;
+  /** Room members (matched users) with names; null when not matched. */
+  roomMembers: RoomMember[] | null;
   refetch: () => Promise<void>;
   addEvent: (event: Omit<CalendarEvent, 'id'>) => Promise<void>;
   updateEvent: (id: string, updates: Partial<CalendarEvent>) => Promise<void>;
@@ -52,6 +56,7 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [matchUserEmails, setMatchUserEmails] = useState<[string, string] | null>(null);
+  const [roomMembers, setRoomMembers] = useState<RoomMember[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,6 +65,7 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
     if (!email) {
       setEvents([]);
       setMatchUserEmails(null);
+      setRoomMembers(null);
       return;
     }
     setLoading(true);
@@ -70,6 +76,7 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
       if (!res.ok) {
         setEvents([]);
         setMatchUserEmails(null);
+        setRoomMembers(null);
         setError(data?.error ?? 'Failed to load events');
         return;
       }
@@ -80,9 +87,15 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
           ? [data.matchUserEmails[0], data.matchUserEmails[1]]
           : null
       );
+      setRoomMembers(
+        Array.isArray(data.matchUserNames) && data.matchUserNames.length >= 2
+          ? data.matchUserNames
+          : null
+      );
     } catch (e) {
       setEvents([]);
       setMatchUserEmails(null);
+      setRoomMembers(null);
       setError('Failed to load events');
     } finally {
       setLoading(false);
@@ -211,6 +224,7 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
       events,
       loading,
       error,
+      roomMembers,
       refetch: fetchEvents,
       addEvent,
       updateEvent,
@@ -223,6 +237,7 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
       events,
       loading,
       error,
+      roomMembers,
       fetchEvents,
       addEvent,
       updateEvent,
