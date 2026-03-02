@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { Outlet, useLocation, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import '../profile/profile.css';
+import '../home.css';
 
 export default function UnmatchedLayout() {
   const { user, signOut } = useAuth();
@@ -28,7 +29,7 @@ export default function UnmatchedLayout() {
 
   return (
     <div className="profile-page unmatched-page">
-      <header className="profile-header">
+      <div className="home-header">
         <div className="header-left">
           <div className="logo-left">FYRA</div>
           <div className="university-text">Transylvania University</div>
@@ -46,7 +47,7 @@ export default function UnmatchedLayout() {
             Sign Out
           </button>
         </div>
-      </header>
+      </div>
       <main className="profile-main">
         <Outlet />
       </main>
