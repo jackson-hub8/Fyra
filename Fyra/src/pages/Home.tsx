@@ -257,8 +257,12 @@ const Home = () => {
             <div className="roommate-title">Room</div>
             <div className="roommate-content">
               {roomMembers && roomMembers.length > 0
-                ? roomMembers.map((m) => m.name).join(', ')
-                : '—'}
+                ? roomMembers.map((m) => (
+                    <div key={m.email} className="roommate-name">
+                      {m.name}
+                    </div>
+                  ))
+                : <span className="roommate-name">—</span>}
             </div>
           </div>
         </div>
