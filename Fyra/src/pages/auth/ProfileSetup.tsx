@@ -335,7 +335,7 @@ export default function ProfileSetup() {
           {buildProfile ? 'Build your profile' : `Profile setup (${page + 1} of ${TOTAL_QUESTION_PAGES})`}
         </h2>
         <p className="form-title-subtitle">
-          {buildProfile ? 'This will be public' : 'Your answers will remain private'}
+          {buildProfile ? 'All information on this section will be on your public profile' : 'Your answers to this questionnaire will remain private'}
         </p>
         {error && <div className="error-message">{error}</div>}
 
@@ -466,8 +466,14 @@ export default function ProfileSetup() {
                 {q.type === 'allergies' && q.allergyCategories && (() => {
                   const raw = (form[q.id] ?? '').trim();
                   const { selected, otherText } = parseAllergiesValue(raw);
+                  const noneSelected = selected.has('None');
                   const toggle = (value: string) => {
+                    if (value === 'None') {
+                      updateForm(q.id, buildAllergiesValue(new Set(['None']), ''));
+                      return;
+                    }
                     const next = new Set(selected);
+                    next.delete('None');
                     if (next.has(value)) next.delete(value);
                     else next.add(value);
                     updateForm(q.id, buildAllergiesValue(next, otherText));
@@ -494,7 +500,7 @@ export default function ProfileSetup() {
                         >
                           <input
                             type="checkbox"
-                            checked={selected.has(opt.value) || (opt.value === 'Other' && !!otherText.trim())}
+                            checked={opt.value === 'None' ? noneSelected : selected.has(opt.value) || (opt.value === 'Other' && !!otherText.trim())}
                             onChange={() => toggle(opt.value)}
                           />
                           <span>{opt.label}</span>
