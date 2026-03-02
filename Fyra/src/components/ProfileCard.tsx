@@ -16,7 +16,9 @@ type ProfileData = {
 
 type PetPeeve = { id: number; petPeeve: string };
 
-export default function ProfileCard({ email }: { email: string }) {
+type ProfileCardProps = { email: string; readOnly?: boolean };
+
+export default function ProfileCard({ email, readOnly = false }: ProfileCardProps) {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [petPeeves, setPetPeeves] = useState<PetPeeve[]>([]);
   const [loading, setLoading] = useState(true);
@@ -233,7 +235,7 @@ export default function ProfileCard({ email }: { email: string }) {
                 'PHOTO'
               )}
             </div>
-            {editing && (
+            {!readOnly && editing && (
               <>
                 <input
                   type="file"
@@ -266,7 +268,7 @@ export default function ProfileCard({ email }: { email: string }) {
                 {photoError && <div className="profile-photo-error">{photoError}</div>}
               </>
             )}
-            {editing ? (
+            {!readOnly && editing ? (
               <div className="profile-edit-form">
                 <label>Bio</label>
                 <textarea
@@ -283,7 +285,7 @@ export default function ProfileCard({ email }: { email: string }) {
             )}
           </div>
           <div className="profile-details">
-            {editing ? (
+            {!readOnly && editing ? (
               <>
                 <div className="profile-edit-form">
                   <label>Top interests</label>
@@ -366,13 +368,15 @@ export default function ProfileCard({ email }: { email: string }) {
                 <div className="profile-edit-form" style={{ marginBottom: 16 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                     <h3>Top Interests</h3>
-                    <button type="button" className="btn-edit-inline" onClick={() => setEditing(true)} aria-label="Edit profile">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width={18} height={18}>
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                      </svg>
-                      Edit
-                    </button>
+                    {!readOnly && (
+                      <button type="button" className="btn-edit-inline" onClick={() => setEditing(true)} aria-label="Edit profile">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width={18} height={18}>
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                        Edit
+                      </button>
+                    )}
                   </div>
                   <ul>
                     {(profile.topInterests ?? '').split(/[\n,]+/).map((s) => s.trim()).filter(Boolean).map((item, i) => (
@@ -398,7 +402,7 @@ export default function ProfileCard({ email }: { email: string }) {
               </>
             )}
           </div>
-          {editing && (
+          {!readOnly && editing && (
             <div className="profile-edit-actions">
               <button type="button" className="btn-cancel" onClick={cancelEdit} disabled={saving}>
                 Cancel
