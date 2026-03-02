@@ -23,6 +23,7 @@ export default function UnmatchedMatching() {
   const [pointerDown, setPointerDown] = useState(false);
   const dragStartRef = useRef<number>(0);
   const dragOffsetRef = useRef<number>(0);
+  const pendingSwipeRef = useRef<{ targetEmail: string; action: 'like' | 'pass' } | null>(null);
 
   const currentEmail = deck[currentIndex] ?? null;
   const nextEmails = [deck[currentIndex + 1], deck[currentIndex + 2]].filter(Boolean) as string[];
@@ -56,38 +57,11 @@ export default function UnmatchedMatching() {
     fetchDeck();
   }, [user?.email, navigate, fetchDeck]);
 
-  const performSwipe = useCallback(
-    async (action: 'like' | 'pass') => {
-      if (!user?.email || !currentEmail || swiping) return;
-      setSwiping(true);
-      setError('');
-      try {
-        const res = await fetch('/api/matching/swipe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            swiperEmail: user.email,
-            targetEmail: currentEmail,
-            action,
-          }),
-        });
-        const data = (await res.json().catch(() => ({}))) as { error?: string };
-        if (!res.ok) throw new Error(data.error || 'Swipe failed');
-        setCurrentIndex((i) => i + 1);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Something went wrong');
-      } finally {
-        setSwiping(false);
-        setDragOffset(0);
-        setExitDirection(null);
-      }
-    },
-    [user?.email, currentEmail, swiping]
-  );
-
   const triggerSwipe = useCallback(
     (action: 'like' | 'pass') => {
       if (!currentEmail || swiping || exitDirection) return;
+      pendingSwipeRef.current = { targetEmail: currentEmail, action };
+      setSwiping(true);
       setExitDirection(action === 'like' ? 'right' : 'left');
     },
     [currentEmail, swiping, exitDirection]
@@ -96,10 +70,30 @@ export default function UnmatchedMatching() {
   useEffect(() => {
     if (!exitDirection) return;
     const t = setTimeout(() => {
-      performSwipe(exitDirection === 'right' ? 'like' : 'pass');
+      setCurrentIndex((i) => i + 1);
+      setExitDirection(null);
+      setSwiping(false);
+      setDragOffset(0);
+      const pending = pendingSwipeRef.current;
+      pendingSwipeRef.current = null;
+      if (!user?.email || !pending) return;
+      fetch('/api/matching/swipe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          swiperEmail: user.email,
+          targetEmail: pending.targetEmail,
+          action: pending.action,
+        }),
+      })
+        .then(async (res) => {
+          const data = (await res.json().catch(() => ({}))) as { error?: string };
+          if (!res.ok) setError(data?.error ?? 'Swipe failed');
+        })
+        .catch(() => setError('Something went wrong'));
     }, FLY_OFF_DURATION_MS);
     return () => clearTimeout(t);
-  }, [exitDirection, performSwipe]);
+  }, [exitDirection, user?.email]);
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     if (exitDirection) return;
@@ -124,6 +118,11 @@ export default function UnmatchedMatching() {
     dragOffsetRef.current = 0;
     dragStartRef.current = 0;
     if (Math.abs(offset) >= SWIPE_THRESHOLD_PX && currentEmail && !swiping && !exitDirection) {
+      pendingSwipeRef.current = {
+        targetEmail: currentEmail,
+        action: offset > 0 ? 'like' : 'pass',
+      };
+      setSwiping(true);
       setExitDirection(offset > 0 ? 'right' : 'left');
     }
   }, [currentEmail, swiping, exitDirection]);
