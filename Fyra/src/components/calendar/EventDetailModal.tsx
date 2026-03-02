@@ -9,6 +9,8 @@ type EventDetailModalProps = {
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   getEventColor: (creatorId: string) => string;
+  /** If false, only show event info (no Edit/Delete). Default true. */
+  canEdit?: boolean;
 };
 
 export default function EventDetailModal({
@@ -17,6 +19,7 @@ export default function EventDetailModal({
   onEdit,
   onDelete,
   getEventColor,
+  canEdit = true,
 }: EventDetailModalProps) {
   const color = getEventColor(event.creatorId);
   return (
@@ -43,14 +46,16 @@ export default function EventDetailModal({
             </div>
           )}
         </div>
-        <div className="event-detail-actions">
-          <button type="button" className="edit-event-btn" onClick={() => onEdit(event.id)}>
-            Edit
-          </button>
-          <button type="button" className="delete-event-btn" onClick={() => onDelete(event.id)}>
-            Delete
-          </button>
-        </div>
+        {canEdit && (
+          <div className="event-detail-actions">
+            <button type="button" className="edit-event-btn" onClick={() => onEdit(event.id)}>
+              Edit
+            </button>
+            <button type="button" className="delete-event-btn" onClick={() => onDelete(event.id)}>
+              Delete
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
