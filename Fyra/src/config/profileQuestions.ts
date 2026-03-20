@@ -31,6 +31,7 @@ export type QuestionDef = {
 
 export type PrivateQuestionnairePayload = {
   gender: string;
+  sexAssignedAtBirth: string;
   adaAccommodations: string;
   animalAllergies: string;
   varsitySport: string;
@@ -68,6 +69,17 @@ export const PROFILE_QUESTIONS: QuestionDef[][] = [
         { value: 'Non-binary', label: 'Non-binary' },
         { value: 'Other', label: 'Other' },
         { value: 'Prefer not to say', label: 'Prefer not to say' },
+      ],
+    },
+    {
+      id: 'sexAssignedAtBirth',
+      label: 'Sex assigned at birth? *',
+      required: true,
+      type: 'select',
+      options: [
+        { value: '', label: 'Select...' },
+        { value: 'Yes', label: 'Yes' },
+        { value: 'No', label: 'No' },
       ],
     },
     {

@@ -105,6 +105,7 @@ model PrivateQuestionnaire {
   id                    Int      @id @default(autoincrement())
   userEmail             String   @unique @db.VarChar(255)
   gender                String?  @db.VarChar(100)
+  sexAssignedAtBirth    String?  @db.VarChar(10)
   adaAccommodations     String?  @db.Text
   animalAllergies       String?  @db.Text
   varsitySport          String?  @db.Text
