@@ -255,9 +255,11 @@ export default function UnmatchedMatching() {
                   </div>
                 </div>
               ))}
-              {/* Top card (in flow so wrapper height = content height; draggable) */}
+              {/* Top card: key forces a new DOM node per profile so the browser does not
+                  interpolate transform from the previous card's exit position back to center. */}
               {currentEmail && (
               <div
+                key={currentEmail}
                 className="matching-stack-card matching-stack-card-top"
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
