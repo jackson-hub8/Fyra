@@ -153,6 +153,20 @@ export default function ProfileSetup() {
           setError(`Please add at least one item for: ${q.label.replace(/\s*\*$/, '')}`);
           return false;
         }
+        if (q.id === 'freeTime' && items.length < 3) {
+          setError('Please add at least three interests or activities for free time.');
+          return false;
+        }
+      }
+      if (q.id === 'musicPreference' && q.type === 'select') {
+        const mv = (form.musicPreference ?? '').trim();
+        if (mv === 'Other' || mv.startsWith('Other:')) {
+          const genre = mv.startsWith('Other:') ? mv.slice(6).trim() : '';
+          if (!genre) {
+            setError('Please specify a music genre for Other.');
+            return false;
+          }
+        }
       }
       if (q.type === 'checklist' && q.required) {
         const selected = parseChecklistValue(v);
@@ -369,7 +383,44 @@ export default function ProfileSetup() {
             {currentQuestions.map((q) => (
               <div key={q.id} style={{ marginBottom: 16 }}>
                 <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>{q.label}</label>
-                {q.type === 'select' && (
+                {q.type === 'select' && q.id === 'musicPreference' && (
+                  <>
+                    <select
+                      className="password-input"
+                      value={(form.musicPreference ?? '').startsWith('Other:') ? 'Other' : form.musicPreference ?? ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'Other') updateForm('musicPreference', 'Other');
+                        else updateForm('musicPreference', val);
+                      }}
+                    >
+                      {(q.options ?? []).map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                    {((form.musicPreference ?? '').trim() === 'Other' ||
+                      (form.musicPreference ?? '').trim().startsWith('Other:')) && (
+                      <input
+                        type="text"
+                        className="password-input"
+                        placeholder="Specify genre..."
+                        value={
+                          (form.musicPreference ?? '').startsWith('Other:')
+                            ? (form.musicPreference ?? '').slice(6).trim()
+                            : ''
+                        }
+                        onChange={(e) => {
+                          const text = e.target.value.trim();
+                          updateForm('musicPreference', text ? `Other: ${text}` : 'Other');
+                        }}
+                        style={{ marginTop: 8, display: 'block', maxWidth: 360 }}
+                      />
+                    )}
+                  </>
+                )}
+                {q.type === 'select' && q.id !== 'musicPreference' && (
                   <>
                     <select
                       className="password-input"

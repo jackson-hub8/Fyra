@@ -66,6 +66,17 @@ const Login = () => {
         throw new Error('Failed to parse server response');
       }
 
+      if (userData.isAdmin && userData.adminToken) {
+        setUser({
+          email: userData.email,
+          name: userData.name,
+          isAdmin: true,
+          adminToken: userData.adminToken,
+        });
+        navigate('/admin');
+        return;
+      }
+
       setUser({
         email: userData.email,
         name: userData.name,

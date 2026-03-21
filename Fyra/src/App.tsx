@@ -19,6 +19,8 @@ import UnmatchedSearch from './pages/unmatched/UnmatchedSearch';
 import UnmatchedMatching from './pages/unmatched/UnmatchedMatching';
 import UnmatchedSettings from './pages/unmatched/UnmatchedSettings';
 import Settings from './pages/settings/Settings';
+import AdminMatching from './pages/admin/AdminMatching';
+import { AdminRoute } from './pages/admin/AdminRoute';
 
 const App = () => {
   return (
@@ -42,6 +44,14 @@ const App = () => {
           <Route path="matching" element={<UnmatchedMatching />} />
           <Route path="settings" element={<UnmatchedSettings />} />
         </Route>
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminMatching />
+            </AdminRoute>
+          }
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

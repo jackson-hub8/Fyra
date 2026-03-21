@@ -5,7 +5,8 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
-import argon2 from 'argon2'; // For password hashing and salting.  
+import argon2 from 'argon2'; // For password hashing and salting.
+import { signAdminToken } from '../_lib/adminAuth';  
 
 const prisma = new PrismaClient();
 
@@ -100,12 +101,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        // Return user info including isMatched and profileSetupComplete
+        const isAdmin = user.isAdmin;
         return res.status(200).json({
           email: user.email,
           name: user.name,
           isMatched: user.isMatched,
           profileSetupComplete: user.profileSetupComplete,
+          isAdmin,
+          ...(isAdmin ? { adminToken: signAdminToken(user.email) } : {}),
         });
       }
     } catch (error: any) {
