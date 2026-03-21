@@ -8,7 +8,8 @@
     "build": "prisma generate && node node_modules/typescript/bin/tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "promote-admin": "tsx scripts/promote-admin.ts"
+    "promote-admin": "tsx scripts/promote-admin.ts",
+    "create-admin": "tsx scripts/create-admin.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.2",

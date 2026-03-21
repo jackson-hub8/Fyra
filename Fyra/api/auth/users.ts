@@ -6,7 +6,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
 import argon2 from 'argon2'; // For password hashing and salting.
-import { signAdminToken } from '../_lib/adminAuth';  
+import { signAdminToken } from '../_lib/jwtAdmin';
 
 const prisma = new PrismaClient();
 
