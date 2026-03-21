@@ -2,14 +2,14 @@
 /// Jackson Hurley, Kaitlyn Maes, Cam Horine
 /// Unmatched layout: header + outlet + Profile | Search | Matching nav.
 
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect } from 'react';
 import { Outlet, useLocation, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import '../profile/profile.css';
 import '../home.css';
 
 export default function UnmatchedLayout() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, preloadMatchingDeck } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -19,6 +19,11 @@ export default function UnmatchedLayout() {
       return;
     }
   }, [user, navigate]);
+
+  useLayoutEffect(() => {
+    if (!user?.email || user.isMatched || !user.profileSetupComplete) return;
+    void preloadMatchingDeck(user.email);
+  }, [user?.email, user?.isMatched, user?.profileSetupComplete, preloadMatchingDeck]);
   const path = location.pathname;
   const isSearch = path.endsWith('/search');
   const isMatching = path.endsWith('/matching');

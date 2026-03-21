@@ -19,9 +19,11 @@ type AuthContextValue = {
   user: User | null;
   setUser: (u: User | null) => void;
   signOut: () => void;
-  /** Fetches /api/matching/deck and caches for consumeMatchingDeckPreloadForEmail. No-op if cache already holds this user. */
+  /** Fetches /api/matching/deck and caches for the matching page. No-op if cache already holds this user. */
   preloadMatchingDeck: (email: string) => Promise<void>;
-  /** Returns cached deck for this user and clears cache; null if none. */
+  /** Read cached deck without clearing (e.g. before deferring consume for Strict Mode / layout). */
+  peekMatchingDeckPreloadForEmail: (email: string) => string[] | null;
+  /** Clears cached deck after it has been applied to the UI. */
   consumeMatchingDeckPreloadForEmail: (email: string) => string[] | null;
 };
 
@@ -92,6 +94,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await run;
   }, []);
 
+  const peekMatchingDeckPreloadForEmail = useCallback((email: string): string[] | null => {
+    const normalized = email.trim().toLowerCase();
+    const p = matchingDeckPreloadRef.current;
+    if (p?.userEmail === normalized) {
+      return [...p.deck];
+    }
+    return null;
+  }, []);
+
   const consumeMatchingDeckPreloadForEmail = useCallback((email: string): string[] | null => {
     const normalized = email.trim().toLowerCase();
     const p = matchingDeckPreloadRef.current;
@@ -111,7 +122,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, setUser, signOut, preloadMatchingDeck, consumeMatchingDeckPreloadForEmail }}
+      value={{
+        user,
+        setUser,
+        signOut,
+        preloadMatchingDeck,
+        peekMatchingDeckPreloadForEmail,
+        consumeMatchingDeckPreloadForEmail,
+      }}
     >
       {children}
     </AuthContext.Provider>

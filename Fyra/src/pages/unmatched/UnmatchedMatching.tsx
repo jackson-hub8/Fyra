@@ -11,7 +11,8 @@ const SWIPE_THRESHOLD_PX = 80;
 const FLY_OFF_DURATION_MS = 280;
 
 export default function UnmatchedMatching() {
-  const { user, consumeMatchingDeckPreloadForEmail } = useAuth();
+  const { user, peekMatchingDeckPreloadForEmail, consumeMatchingDeckPreloadForEmail, preloadMatchingDeck } =
+    useAuth();
   const navigate = useNavigate();
   const [deck, setDeck] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -54,16 +55,47 @@ export default function UnmatchedMatching() {
       navigate('/');
       return;
     }
-    const preloaded = consumeMatchingDeckPreloadForEmail(user.email);
-    if (preloaded !== null) {
-      setDeck(preloaded);
+
+    const applyPreloadedDeck = (emails: string[]) => {
+      setDeck(emails);
       setCurrentIndex(0);
       setLoading(false);
       setError('');
+      // Defer consume so React Strict Mode's mount→unmount→remount still sees the cache on the second mount.
+      window.setTimeout(() => {
+        consumeMatchingDeckPreloadForEmail(user.email);
+      }, 0);
+    };
+
+    const peeked = peekMatchingDeckPreloadForEmail(user.email);
+    if (peeked !== null) {
+      applyPreloadedDeck(peeked);
       return;
     }
-    fetchDeck();
-  }, [user?.email, navigate, fetchDeck, consumeMatchingDeckPreloadForEmail]);
+
+    let cancelled = false;
+    void (async () => {
+      await preloadMatchingDeck(user.email);
+      if (cancelled) return;
+      const afterPreload = peekMatchingDeckPreloadForEmail(user.email);
+      if (afterPreload !== null) {
+        applyPreloadedDeck(afterPreload);
+        return;
+      }
+      fetchDeck();
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    user?.email,
+    navigate,
+    fetchDeck,
+    peekMatchingDeckPreloadForEmail,
+    consumeMatchingDeckPreloadForEmail,
+    preloadMatchingDeck,
+  ]);
 
   const triggerSwipe = useCallback(
     (action: 'like' | 'pass') => {
