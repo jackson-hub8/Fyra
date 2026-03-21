@@ -8,6 +8,7 @@ const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
 
 type Props = {
   email: string;
+  name: string;
   profilePicture: string | null;
   onProfilePictureChange: (url: string | null) => void;
   bio: string;
@@ -31,6 +32,7 @@ type Props = {
 
 export default function ProfileCardSetup({
   email,
+  name,
   profilePicture,
   onProfilePictureChange,
   bio,
@@ -149,6 +151,7 @@ export default function ProfileCardSetup({
             )}
           </div>
           {photoError && <div className="profile-photo-error">{photoError}</div>}
+          <div className="profile-card-name">{name.trim() || email}</div>
           <div className="profile-edit-form">
             <label>Bio *</label>
             <textarea

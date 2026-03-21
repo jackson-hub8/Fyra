@@ -268,6 +268,7 @@ export default function ProfileCard({ email, readOnly = false }: ProfileCardProp
                 {photoError && <div className="profile-photo-error">{photoError}</div>}
               </>
             )}
+            <div className="profile-card-name">{profile.name?.trim() || profile.userEmail}</div>
             {!readOnly && editing ? (
               <div className="profile-edit-form">
                 <label>Bio</label>

@@ -343,6 +343,7 @@ export default function ProfileSetup() {
         {buildProfile ? (
           <ProfileCardSetup
             email={user.email}
+            name={user.name}
             profilePicture={profilePicture}
             onProfilePictureChange={setProfilePicture}
             bio={bio}
