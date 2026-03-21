@@ -267,7 +267,7 @@ export default function AdminMatching() {
           <div className="logo-left">FYRA</div>
           <div className="university-text">Transylvania University</div>
         </div>
-        <div className="page-title">Admin</div>
+        <div className="page-title">{pageTitle}</div>
         <div className="header-right">
           <button
             type="button"
@@ -283,7 +283,6 @@ export default function AdminMatching() {
       </div>
 
       <main className="profile-main admin-matching-main">
-        <p style={{ margin: '0 0 12px', fontSize: 14, color: '#555' }}>{pageTitle}</p>
         {error && <div className="error-message">{error}</div>}
         {loading && !pairModalLoading && <p className="profile-loading">Loading…</p>}
 
