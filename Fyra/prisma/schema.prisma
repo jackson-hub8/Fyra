@@ -3,7 +3,9 @@
 /// Defines the database schema for the application using Prisma ORM
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // Vercel serverless runs Linux (glibc + OpenSSL 3); include alongside native for local dev.
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {

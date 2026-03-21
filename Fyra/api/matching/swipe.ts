@@ -7,7 +7,7 @@ import {
   canonicalPair,
   computeSimilarityScore,
   isPairBlocked,
-} from '../_lib/matching';
+} from '../lib/matching';
 
 const prisma = new PrismaClient();
 

@@ -3,7 +3,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
-import { isPairBlocked } from '../_lib/matching';
+import { isPairBlocked } from '../lib/matching';
 
 const prisma = new PrismaClient();
 
