@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "promote-admin": "tsx scripts/promote-admin.ts",
-    "create-admin": "tsx scripts/create-admin.ts"
+    "create-admin": "tsx scripts/create-admin.ts",
+    "seed:matching-deck": "tsx scripts/seed-matching-deck-users.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.2",

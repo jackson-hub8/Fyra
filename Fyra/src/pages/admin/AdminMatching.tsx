@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import '../auth/login.css';
+import '../profile/profile.css';
+import '../home.css';
+import './admin-matching.css';
 
 type UnmatchedUser = { email: string; name: string };
 type PossibleRow = {
@@ -18,7 +22,75 @@ type MatchedPair = {
   user2: { email: string; name: string };
 };
 
+/** Private questionnaire fields in display order with plain-language labels. */
+const QUESTIONNAIRE_FIELDS: { key: string; label: string }[] = [
+  { key: 'gender', label: 'Gender identity' },
+  { key: 'sexAssignedAtBirth', label: 'Sex assigned at birth' },
+  { key: 'adaAccommodations', label: 'ADA accommodations' },
+  { key: 'animalAllergies', label: 'Animal allergies' },
+  { key: 'varsitySport', label: 'Varsity sports' },
+  { key: 'smoking', label: 'Nicotine / smoking' },
+  { key: 'cannabis', label: 'Cannabis' },
+  { key: 'alcohol', label: 'Alcohol' },
+  { key: 'roomTemp', label: 'Room temperature preference' },
+  { key: 'bedroomDescription', label: 'Bedroom organization' },
+  { key: 'sleepType', label: 'Sleep schedule type' },
+  { key: 'weekdayBedtime', label: 'Typical weekday bedtime' },
+  { key: 'freeTime', label: 'Free time & hobbies' },
+  { key: 'campusActivity', label: 'Campus activity level' },
+  { key: 'visitorFrequency', label: 'How often visitors come by' },
+  { key: 'weekendHomeFrequency', label: 'Weekends away from campus' },
+  { key: 'firstClassTime', label: 'First class time' },
+  { key: 'musicPreference', label: 'Music preference' },
+  { key: 'politicalViews', label: 'Political views' },
+  { key: 'religion', label: 'Religion / spirituality' },
+  { key: 'studyEnvironment', label: 'Preferred study environment' },
+  { key: 'intendedMajor', label: 'Intended major / focus' },
+  { key: 'vehicleToCampus', label: 'Transportation to campus' },
+];
+
+function formatAnswer(value: unknown): string {
+  if (value === null || value === undefined) return '—';
+  const s = String(value).trim();
+  return s.length === 0 ? '—' : s;
+}
+
+function QuestionnairePanel({
+  heading,
+  email,
+  data,
+}: {
+  heading: string;
+  email: string;
+  data: Record<string, unknown> | null;
+}) {
+  if (!data) {
+    return (
+      <div className="admin-q-person">
+        <h4>{heading}</h4>
+        <p className="admin-q-email">{email}</p>
+        <p style={{ color: '#666', fontSize: 14 }}>No questionnaire on file.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="admin-q-person">
+      <h4>{heading}</h4>
+      <p className="admin-q-email">{email}</p>
+      <dl>
+        {QUESTIONNAIRE_FIELDS.map(({ key, label }) => (
+          <div key={key} className="admin-q-row">
+            <dt>{label}</dt>
+            <dd>{formatAnswer(data[key])}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
 export default function AdminMatching() {
+  const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const token = user?.adminToken ?? '';
 
@@ -27,8 +99,15 @@ export default function AdminMatching() {
   const [matchedPairs, setMatchedPairs] = useState<MatchedPair[]>([]);
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
   const [possibleList, setPossibleList] = useState<PossibleRow[]>([]);
-  const [questionnaire, setQuestionnaire] = useState<Record<string, unknown> | null>(null);
-  const [qEmail, setQEmail] = useState<string | null>(null);
+  const [pairModal, setPairModal] = useState<{
+    primaryName: string;
+    primaryEmail: string;
+    partnerName: string;
+    partnerEmail: string;
+    questionnairePrimary: Record<string, unknown> | null;
+    questionnairePartner: Record<string, unknown> | null;
+  } | null>(null);
+  const [pairModalLoading, setPairModalLoading] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [manualA, setManualA] = useState('');
@@ -75,8 +154,6 @@ export default function AdminMatching() {
 
   const selectUser = async (email: string) => {
     setSelectedEmail(email);
-    setQuestionnaire(null);
-    setQEmail(null);
     setError('');
     try {
       const res = await fetch(`/api/admin/possible-matches?email=${encodeURIComponent(email)}`, {
@@ -91,19 +168,39 @@ export default function AdminMatching() {
     }
   };
 
-  const loadQuestionnaire = async (email: string) => {
-    setQEmail(email);
+  const openPairQuestionnaires = async (partnerEmail: string, partnerName: string) => {
+    if (!selectedEmail) return;
+    const primaryName =
+      unmatchedUsers.find((u) => u.email === selectedEmail)?.name ?? selectedEmail;
+    setPairModalLoading(true);
     setError('');
+    setPairModal(null);
     try {
-      const res = await fetch(`/api/admin/private-questionnaire?email=${encodeURIComponent(email)}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const headers = { Authorization: `Bearer ${token}` };
+      const [resA, resB] = await Promise.all([
+        fetch(`/api/admin/private-questionnaire?email=${encodeURIComponent(selectedEmail)}`, {
+          headers,
+        }),
+        fetch(`/api/admin/private-questionnaire?email=${encodeURIComponent(partnerEmail)}`, {
+          headers,
+        }),
+      ]);
+      const dataA = (await resA.json()) as { questionnaire?: Record<string, unknown>; error?: string };
+      const dataB = (await resB.json()) as { questionnaire?: Record<string, unknown>; error?: string };
+      if (!resA.ok) throw new Error(dataA.error ?? 'Could not load first questionnaire');
+      if (!resB.ok) throw new Error(dataB.error ?? 'Could not load second questionnaire');
+      setPairModal({
+        primaryName,
+        primaryEmail: selectedEmail,
+        partnerName,
+        partnerEmail,
+        questionnairePrimary: dataA.questionnaire ?? null,
+        questionnairePartner: dataB.questionnaire ?? null,
       });
-      const data = (await res.json()) as { questionnaire?: Record<string, unknown>; error?: string };
-      if (!res.ok) throw new Error(data.error ?? 'Failed');
-      setQuestionnaire(data.questionnaire ?? null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error');
-      setQuestionnaire(null);
+    } finally {
+      setPairModalLoading(false);
     }
   };
 
@@ -161,51 +258,49 @@ export default function AdminMatching() {
     }
   };
 
-  return (
-    <div className="login-page">
-      <div className="logo-container">
-        <h1 className="logo-text">FYRA</h1>
-        <p style={{ margin: '8px 0 0', fontSize: 14, opacity: 0.85 }}>Admin — matching oversight</p>
-      </div>
+  const pageTitle = tab === 'unmatched' ? 'Unmatched' : 'Matched';
 
-      <div className="form-card" style={{ maxWidth: 720 }}>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+  return (
+    <div className="profile-page admin-matching-page">
+      <div className="home-header">
+        <div className="header-left">
+          <div className="logo-left">FYRA</div>
+          <div className="university-text">Transylvania University</div>
+        </div>
+        <div className="page-title">Admin</div>
+        <div className="header-right">
           <button
             type="button"
-            className={tab === 'unmatched' ? 'submit-button' : 'back-button'}
-            onClick={() => setTab('unmatched')}
+            className="sign-out-button"
+            onClick={() => {
+              signOut();
+              navigate('/');
+            }}
           >
-            Unmatched
-          </button>
-          <button
-            type="button"
-            className={tab === 'matched' ? 'submit-button' : 'back-button'}
-            onClick={() => setTab('matched')}
-          >
-            Matched
-          </button>
-          <button type="button" className="back-button" style={{ marginLeft: 'auto' }} onClick={() => signOut()}>
-            Sign out
+            Sign Out
           </button>
         </div>
+      </div>
 
+      <main className="profile-main admin-matching-main">
+        <p style={{ margin: '0 0 12px', fontSize: 14, color: '#555' }}>{pageTitle}</p>
         {error && <div className="error-message">{error}</div>}
-        {loading && <p style={{ marginTop: 8 }}>Loading…</p>}
+        {loading && !pairModalLoading && <p className="profile-loading">Loading…</p>}
 
         {tab === 'unmatched' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <div>
+          <div className="admin-matching-split">
+            <section className="admin-matching-column" aria-label="Unmatched students">
               <h3 className="form-title" style={{ fontSize: '1.1rem' }}>
                 Unmatched students
               </h3>
-              <ul style={{ listStyle: 'none', padding: 0, maxHeight: 360, overflowY: 'auto' }}>
+              <ul className="admin-matching-scroll">
                 {unmatchedUsers.map((u) => (
-                  <li key={u.email} style={{ marginBottom: 8 }}>
+                  <li key={u.email}>
                     <button
                       type="button"
                       className={selectedEmail === u.email ? 'submit-button' : 'back-button'}
                       style={{ width: '100%', textAlign: 'left' }}
-                      onClick={() => selectUser(u.email)}
+                      onClick={() => void selectUser(u.email)}
                     >
                       {u.name}
                       <span style={{ opacity: 0.75, fontSize: 12, display: 'block' }}>{u.email}</span>
@@ -213,60 +308,60 @@ export default function AdminMatching() {
                   </li>
                 ))}
               </ul>
-            </div>
-            <div>
+            </section>
+            <section className="admin-matching-column" aria-label="Possible matches">
               <h3 className="form-title" style={{ fontSize: '1.1rem' }}>
                 Possible matches (by score)
               </h3>
-              {!selectedEmail && <p style={{ color: '#666' }}>Select a student to see mutual likes.</p>}
+              {!selectedEmail && (
+                <p style={{ color: '#666', margin: 0 }}>Select a student to see mutual likes.</p>
+              )}
               {selectedEmail && (
-                <ul style={{ listStyle: 'none', padding: 0 }}>
+                <ul className="admin-matching-scroll">
                   {possibleList.map((p) => (
-                    <li
-                      key={p.id}
-                      style={{
-                        border: '1px solid #ddd',
-                        borderRadius: 8,
-                        padding: 12,
-                        marginBottom: 10,
-                      }}
-                    >
-                      <strong>{p.partnerName}</strong>
-                      <div style={{ fontSize: 13, color: '#555' }}>{p.partnerEmail}</div>
-                      <div style={{ fontSize: 13, marginTop: 6 }}>
-                        Score: <strong>{p.similarityScore.toFixed(3)}</strong>
-                      </div>
-                      <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-                        <button type="button" className="submit-button" onClick={() => approve(p.id)}>
-                          Approve
-                        </button>
-                        <button type="button" className="back-button" onClick={() => reject(p.id)}>
-                          Reject
-                        </button>
-                        <button type="button" className="back-button" onClick={() => loadQuestionnaire(p.partnerEmail)}>
-                          View questionnaire
-                        </button>
+                    <li key={p.id}>
+                      <div className="admin-possible-card">
+                        <strong>{p.partnerName}</strong>
+                        <div style={{ fontSize: 13, color: '#555' }}>{p.partnerEmail}</div>
+                        <div style={{ fontSize: 13, marginTop: 6 }}>
+                          Similarity score: <strong>{p.similarityScore.toFixed(3)}</strong>
+                        </div>
+                        <div className="admin-possible-actions">
+                          <button type="button" className="submit-button" onClick={() => void approve(p.id)}>
+                            Approve
+                          </button>
+                          <button type="button" className="back-button" onClick={() => void reject(p.id)}>
+                            Reject
+                          </button>
+                          <button
+                            type="button"
+                            className="back-button"
+                            onClick={() => void openPairQuestionnaires(p.partnerEmail, p.partnerName)}
+                            disabled={pairModalLoading}
+                          >
+                            View questionnaires
+                          </button>
+                        </div>
                       </div>
                     </li>
                   ))}
-                  {possibleList.length === 0 && <p style={{ color: '#666' }}>No possible matches yet.</p>}
+                  {possibleList.length === 0 && (
+                    <li style={{ color: '#666' }}>No possible matches yet.</li>
+                  )}
                 </ul>
               )}
-            </div>
+            </section>
           </div>
         )}
 
         {tab === 'matched' && (
-          <div>
+          <div className="admin-matched-block">
             <h3 className="form-title" style={{ fontSize: '1.1rem' }}>
               Matched pairs
             </h3>
-            <ul style={{ listStyle: 'none', padding: 0 }}>
+            <ul className="admin-matched-scroll">
               {matchedPairs.map((m) => (
-                <li
-                  key={m.id}
-                  style={{ padding: '10px 0', borderBottom: '1px solid #eee' }}
-                >
+                <li key={m.id}>
                   <strong>{m.user1.name}</strong> &amp; <strong>{m.user2.name}</strong>
                   <div style={{ fontSize: 12, color: '#666' }}>
                     {m.user1.email} — {m.user2.email}
@@ -275,44 +370,98 @@ export default function AdminMatching() {
               ))}
             </ul>
 
-            <h3 className="form-title" style={{ fontSize: '1.1rem', marginTop: 24 }}>
-              Manual match
-            </h3>
-            <p style={{ fontSize: 14, color: '#555', marginBottom: 8 }}>
-              Create a roommate pair without a pending possible match.
-            </p>
-            <input
-              className="password-input"
-              placeholder="User email A"
-              value={manualA}
-              onChange={(e) => setManualA(e.target.value)}
-              style={{ marginBottom: 8, display: 'block', maxWidth: 400 }}
-            />
-            <input
-              className="password-input"
-              placeholder="User email B"
-              value={manualB}
-              onChange={(e) => setManualB(e.target.value)}
-              style={{ marginBottom: 8, display: 'block', maxWidth: 400 }}
-            />
-            <button type="button" className="submit-button" onClick={() => void manualMatch()}>
-              Match pair
-            </button>
+            <div className="admin-manual-block">
+              <h3 className="form-title" style={{ fontSize: '1.1rem', marginTop: 0 }}>
+                Manual match
+              </h3>
+              <p style={{ fontSize: 14, color: '#555', marginBottom: 8 }}>
+                Create a roommate pair without a pending possible match.
+              </p>
+              <input
+                className="password-input"
+                placeholder="User email A"
+                value={manualA}
+                onChange={(e) => setManualA(e.target.value)}
+                style={{ marginBottom: 8, display: 'block', maxWidth: 400 }}
+              />
+              <input
+                className="password-input"
+                placeholder="User email B"
+                value={manualB}
+                onChange={(e) => setManualB(e.target.value)}
+                style={{ marginBottom: 8, display: 'block', maxWidth: 400 }}
+              />
+              <button type="button" className="submit-button" onClick={() => void manualMatch()}>
+                Match pair
+              </button>
+            </div>
           </div>
         )}
+      </main>
 
-        {questionnaire && qEmail && (
-          <div style={{ marginTop: 24, padding: 16, background: '#f8f8f8', borderRadius: 8, maxHeight: 320, overflowY: 'auto' }}>
-            <h4 style={{ marginTop: 0 }}>Private questionnaire — {qEmail}</h4>
-            <pre style={{ fontSize: 12, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-              {JSON.stringify(questionnaire, null, 2)}
-            </pre>
-            <button type="button" className="back-button" onClick={() => setQuestionnaire(null)}>
-              Close
-            </button>
+      <nav className="profile-bottom-nav" aria-label="Admin sections">
+        <button
+          type="button"
+          className={`nav-item ${tab === 'unmatched' ? 'active' : ''}`}
+          onClick={() => setTab('unmatched')}
+        >
+          Unmatched
+        </button>
+        <button
+          type="button"
+          className={`nav-item ${tab === 'matched' ? 'active' : ''}`}
+          onClick={() => setTab('matched')}
+        >
+          Matched
+        </button>
+      </nav>
+
+      {(pairModalLoading || pairModal) && (
+        <div
+          className="admin-pair-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="admin-pair-modal-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !pairModalLoading) {
+              setPairModal(null);
+            }
+          }}
+        >
+          <div className="admin-pair-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-pair-modal-header">
+              <h2 id="admin-pair-modal-title">Roommate questionnaires</h2>
+              <button
+                type="button"
+                className="admin-pair-modal-close"
+                onClick={() => {
+                  setPairModal(null);
+                  setPairModalLoading(false);
+                }}
+              >
+                Close
+              </button>
+            </div>
+            <div className="admin-pair-modal-body">
+              {pairModalLoading && <p className="profile-loading">Loading questionnaires…</p>}
+              {!pairModalLoading && pairModal && (
+                <div className="admin-pair-modal-columns">
+                  <QuestionnairePanel
+                    heading={pairModal.primaryName}
+                    email={pairModal.primaryEmail}
+                    data={pairModal.questionnairePrimary}
+                  />
+                  <QuestionnairePanel
+                    heading={pairModal.partnerName}
+                    email={pairModal.partnerEmail}
+                    data={pairModal.questionnairePartner}
+                  />
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
