@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
-import { requireAdmin } from '../lib/adminAuth';
-import { setAdminCors } from '../lib/cors';
+import { requireAdmin } from '../lib/adminAuth.js';
+import { setAdminCors } from '../lib/cors.js';
 
 const prisma = new PrismaClient();
 
