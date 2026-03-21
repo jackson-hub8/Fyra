@@ -1,7 +1,7 @@
 /// file: UnmatchedMatching.tsx
 /// Tinder-style matching: card stack, drag tilt, like/pass overlays, fly-off animations.
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import ProfileCard from '../../components/ProfileCard';
@@ -11,7 +11,8 @@ const SWIPE_THRESHOLD_PX = 80;
 const FLY_OFF_DURATION_MS = 280;
 
 export default function UnmatchedMatching() {
-  const { user } = useAuth();
+  const { user, peekMatchingDeckPreloadForEmail, consumeMatchingDeckPreloadForEmail, preloadMatchingDeck } =
+    useAuth();
   const navigate = useNavigate();
   const [deck, setDeck] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -24,6 +25,8 @@ export default function UnmatchedMatching() {
   const dragStartRef = useRef<number>(0);
   const dragOffsetRef = useRef<number>(0);
   const pendingSwipeRef = useRef<{ targetEmail: string; action: 'like' | 'pass' } | null>(null);
+  const exitDirectionRef = useRef<'left' | 'right' | null>(null);
+  exitDirectionRef.current = exitDirection;
 
   const currentEmail = deck[currentIndex] ?? null;
   const nextEmails = [deck[currentIndex + 1], deck[currentIndex + 2]].filter(Boolean) as string[];
@@ -49,13 +52,52 @@ export default function UnmatchedMatching() {
     }
   }, [user?.email]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!user?.email) {
       navigate('/');
       return;
     }
-    fetchDeck();
-  }, [user?.email, navigate, fetchDeck]);
+
+    const applyPreloadedDeck = (emails: string[]) => {
+      setDeck(emails);
+      setCurrentIndex(0);
+      setLoading(false);
+      setError('');
+      // Defer consume so React Strict Mode's mount→unmount→remount still sees the cache on the second mount.
+      window.setTimeout(() => {
+        consumeMatchingDeckPreloadForEmail(user.email);
+      }, 0);
+    };
+
+    const peeked = peekMatchingDeckPreloadForEmail(user.email);
+    if (peeked !== null) {
+      applyPreloadedDeck(peeked);
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      await preloadMatchingDeck(user.email);
+      if (cancelled) return;
+      const afterPreload = peekMatchingDeckPreloadForEmail(user.email);
+      if (afterPreload !== null) {
+        applyPreloadedDeck(afterPreload);
+        return;
+      }
+      fetchDeck();
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    user?.email,
+    navigate,
+    fetchDeck,
+    peekMatchingDeckPreloadForEmail,
+    consumeMatchingDeckPreloadForEmail,
+    preloadMatchingDeck,
+  ]);
 
   const triggerSwipe = useCallback(
     (action: 'like' | 'pass') => {
@@ -111,13 +153,14 @@ export default function UnmatchedMatching() {
   }, [exitDirection]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    if (exitDirectionRef.current) return;
     (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
     setPointerDown(false);
     const offset = dragOffsetRef.current;
     setDragOffset(0);
     dragOffsetRef.current = 0;
     dragStartRef.current = 0;
-    if (Math.abs(offset) >= SWIPE_THRESHOLD_PX && currentEmail && !swiping && !exitDirection) {
+    if (Math.abs(offset) >= SWIPE_THRESHOLD_PX && currentEmail && !swiping && !exitDirectionRef.current) {
       pendingSwipeRef.current = {
         targetEmail: currentEmail,
         action: offset > 0 ? 'like' : 'pass',
@@ -125,7 +168,7 @@ export default function UnmatchedMatching() {
       setSwiping(true);
       setExitDirection(offset > 0 ? 'right' : 'left');
     }
-  }, [currentEmail, swiping, exitDirection]);
+  }, [currentEmail, swiping]);
 
   const handlePointerCancel = useCallback((e: React.PointerEvent) => {
     (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
@@ -137,6 +180,7 @@ export default function UnmatchedMatching() {
 
   useEffect(() => {
     const onPointerUp = () => {
+      if (exitDirectionRef.current) return;
       setPointerDown(false);
       setDragOffset(0);
       dragOffsetRef.current = 0;
@@ -153,10 +197,31 @@ export default function UnmatchedMatching() {
   if (!user?.email) return null;
 
   const noMoreCards = !loading && (deck.length === 0 || currentIndex >= deck.length);
-  const showOverlayLike = !exitDirection && dragOffset > SWIPE_THRESHOLD_PX;
-  const showOverlayPass = !exitDirection && dragOffset < -SWIPE_THRESHOLD_PX;
-  const overlayOpacity = Math.min(1, (Math.abs(dragOffset) - SWIPE_THRESHOLD_PX) / 80);
+  const showOverlayLike =
+    exitDirection === 'right' || (!exitDirection && dragOffset > SWIPE_THRESHOLD_PX);
+  const showOverlayPass =
+    exitDirection === 'left' || (!exitDirection && dragOffset < -SWIPE_THRESHOLD_PX);
+  const overlayOpacity =
+    exitDirection === 'right' || exitDirection === 'left'
+      ? 1
+      : Math.min(1, (Math.abs(dragOffset) - SWIPE_THRESHOLD_PX) / 80);
   const overlayStyle = { opacity: showOverlayLike || showOverlayPass ? overlayOpacity : 0 };
+
+  const topCardTransformStyle: React.CSSProperties =
+    exitDirection === 'right' || exitDirection === 'left'
+      ? {
+          transform:
+            exitDirection === 'right'
+              ? 'translateX(150%) rotate(15deg)'
+              : 'translateX(-150%) rotate(-15deg)',
+          transition: 'transform 0.28s ease-out',
+          pointerEvents: 'none',
+        }
+      : {
+          transform: `translateX(${dragOffset}px) rotate(${dragOffset * 0.03}deg)`,
+          transition: pointerDown ? 'none' : 'transform 0.28s ease-out',
+          pointerEvents: 'auto',
+        };
 
   return (
     <div className="matching-page">
@@ -193,16 +258,12 @@ export default function UnmatchedMatching() {
               {/* Top card (in flow so wrapper height = content height; draggable) */}
               {currentEmail && (
               <div
-                className={`matching-stack-card matching-stack-card-top ${exitDirection ? `matching-card-exit-${exitDirection}` : ''}`}
+                className="matching-stack-card matching-stack-card-top"
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
                 onPointerLeave={handlePointerCancel}
-                style={{
-                  '--matching-drag-offset': `${dragOffset}px`,
-                  '--matching-drag-rotate': `${dragOffset * 0.03}deg`,
-                  transition: pointerDown ? 'none' : undefined,
-                } as React.CSSProperties}
+                style={topCardTransformStyle}
               >
                 <div className="matching-stack-card-inner">
                   {showOverlayLike && (
