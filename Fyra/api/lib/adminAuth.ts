@@ -1,11 +1,11 @@
 import type { VercelRequest } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
-import { verifyAdminToken } from './jwtAdmin';
+import { verifyAdminToken } from '../auth/jwtAdmin.js';
 
 const prisma = new PrismaClient();
 
-export type { AdminJwtPayload } from './jwtAdmin';
-export { verifyAdminToken } from './jwtAdmin';
+export type { AdminJwtPayload } from '../auth/jwtAdmin.js';
+export { verifyAdminToken } from '../auth/jwtAdmin.js';
 
 /** Bearer token from Authorization header. */
 export function getBearerToken(req: VercelRequest): string | null {

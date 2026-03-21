@@ -1,5 +1,5 @@
 /**
- * Admin JWT sign/verify only (no Prisma). Used by login + adminAuth.
+ * Admin JWT sign/verify (no Prisma). Lives next to users.ts so Vercel bundles it with /api/auth/users.
  */
 import jwt from 'jsonwebtoken';
 

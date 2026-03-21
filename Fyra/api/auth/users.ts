@@ -6,7 +6,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
 import argon2 from 'argon2'; // For password hashing and salting.
-import { signAdminToken } from '../lib/jwtAdmin';
+// jwtAdmin is dynamically imported only when user.isAdmin — student logins never load it.
 
 const prisma = new PrismaClient();
 
@@ -123,13 +123,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         const isAdmin = user.isAdmin;
+        if (isAdmin) {
+          const { signAdminToken } = await import('./jwtAdmin.js');
+          return res.status(200).json({
+            email: user.email,
+            name: user.name,
+            isMatched: user.isMatched,
+            profileSetupComplete: user.profileSetupComplete,
+            isAdmin: true,
+            adminToken: signAdminToken(user.email),
+          });
+        }
         return res.status(200).json({
           email: user.email,
           name: user.name,
           isMatched: user.isMatched,
           profileSetupComplete: user.profileSetupComplete,
-          isAdmin,
-          ...(isAdmin ? { adminToken: signAdminToken(user.email) } : {}),
+          isAdmin: false,
         });
       }
     } catch (error: any) {
