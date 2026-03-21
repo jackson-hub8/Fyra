@@ -313,7 +313,9 @@ export default function AdminMatching() {
                 Possible matches (by score)
               </h3>
               {!selectedEmail && (
-                <p style={{ color: '#666', margin: 0 }}>Select a student to see mutual likes.</p>
+                <div className="admin-possible-empty">
+                  <p>Select a student to see mutual likes.</p>
+                </div>
               )}
               {selectedEmail && (
                 <ul className="admin-matching-scroll">
