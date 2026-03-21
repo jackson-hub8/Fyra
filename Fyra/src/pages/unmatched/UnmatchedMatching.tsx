@@ -1,7 +1,7 @@
 /// file: UnmatchedMatching.tsx
 /// Tinder-style matching: card stack, drag tilt, like/pass overlays, fly-off animations.
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import ProfileCard from '../../components/ProfileCard';
@@ -11,7 +11,7 @@ const SWIPE_THRESHOLD_PX = 80;
 const FLY_OFF_DURATION_MS = 280;
 
 export default function UnmatchedMatching() {
-  const { user } = useAuth();
+  const { user, consumeMatchingDeckPreloadForEmail } = useAuth();
   const navigate = useNavigate();
   const [deck, setDeck] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -49,13 +49,21 @@ export default function UnmatchedMatching() {
     }
   }, [user?.email]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!user?.email) {
       navigate('/');
       return;
     }
+    const preloaded = consumeMatchingDeckPreloadForEmail(user.email);
+    if (preloaded !== null) {
+      setDeck(preloaded);
+      setCurrentIndex(0);
+      setLoading(false);
+      setError('');
+      return;
+    }
     fetchDeck();
-  }, [user?.email, navigate, fetchDeck]);
+  }, [user?.email, navigate, fetchDeck, consumeMatchingDeckPreloadForEmail]);
 
   const triggerSwipe = useCallback(
     (action: 'like' | 'pass') => {

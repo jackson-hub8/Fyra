@@ -13,7 +13,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const { setUser, preloadMatchingDeck } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,6 +77,7 @@ const Login = () => {
       } else if (userData.isMatched) {
         navigate('/matched');
       } else {
+        await preloadMatchingDeck(userData.email);
         navigate('/unmatched');
       }
     } catch (err) {

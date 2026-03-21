@@ -72,7 +72,7 @@ function buildAllergiesValue(selected: Set<string>, otherText: string): string {
 }
 
 export default function ProfileSetup() {
-  const { user, setUser } = useAuth();
+  const { user, setUser, preloadMatchingDeck } = useAuth();
   const navigate = useNavigate();
   const [page, setPage] = useState(0);
   const [buildProfile, setBuildProfile] = useState(false);
@@ -315,6 +315,7 @@ export default function ProfileSetup() {
       if (!compRes.ok) throw new Error('Failed to complete profile setup');
 
       setUser({ ...user, profileSetupComplete: true });
+      await preloadMatchingDeck(user.email);
       navigate('/unmatched');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong');
