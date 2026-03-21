@@ -1,8 +1,13 @@
 /// File: swipe.ts
-/// POST: record a swipe (like or pass). Adds like to possible matches for admin later.
+/// POST: record a swipe (like or pass). Syncs PossibleMatches when mutual like / breaks.
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
+import {
+  canonicalPair,
+  computeSimilarityScore,
+  isPairBlocked,
+} from '../lib/matching.js';
 
 const prisma = new PrismaClient();
 
@@ -14,6 +19,46 @@ function setCors(res: VercelResponse) {
     'Access-Control-Allow-Headers',
     'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version',
   );
+}
+
+async function syncPossibleMatch(swiperEmail: string, targetEmail: string) {
+  const [e1, e2] = canonicalPair(swiperEmail, targetEmail);
+  const [rowAB, rowBA] = await Promise.all([
+    prisma.swipeActions.findUnique({
+      where: { swiperEmail_targetEmail: { swiperEmail, targetEmail } },
+    }),
+    prisma.swipeActions.findUnique({
+      where: { swiperEmail_targetEmail: { swiperEmail: targetEmail, targetEmail: swiperEmail } },
+    }),
+  ]);
+  const mutual = rowAB?.action === 'like' && rowBA?.action === 'like';
+  if (!mutual) {
+    await prisma.possibleMatches.deleteMany({
+      where: { userEmail1: e1, userEmail2: e2 },
+    });
+    return;
+  }
+  const [qSwiper, qTarget] = await Promise.all([
+    prisma.privateQuestionnaire.findUnique({ where: { userEmail: swiperEmail } }),
+    prisma.privateQuestionnaire.findUnique({ where: { userEmail: targetEmail } }),
+  ]);
+  if (!qSwiper || !qTarget) return;
+  if (isPairBlocked(qSwiper, qTarget)) {
+    await prisma.possibleMatches.deleteMany({
+      where: { userEmail1: e1, userEmail2: e2 },
+    });
+    return;
+  }
+  const score = computeSimilarityScore(qSwiper, qTarget);
+  await prisma.possibleMatches.upsert({
+    where: { userEmail1_userEmail2: { userEmail1: e1, userEmail2: e2 } },
+    create: {
+      userEmail1: e1,
+      userEmail2: e2,
+      similarityScore: score,
+    },
+    update: { similarityScore: score },
+  });
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -59,6 +104,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       create: { swiperEmail, targetEmail, action },
       update: { action },
     });
+
+    await syncPossibleMatch(swiperEmail, targetEmail);
 
     return res.status(200).json({ success: true });
   } catch (e) {

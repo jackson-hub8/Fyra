@@ -5,9 +5,27 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
-import argon2 from 'argon2'; // For password hashing and salting.  
+import argon2 from 'argon2'; // For password hashing and salting.
+// jwtAdmin is dynamically imported only when user.isAdmin — student logins never load it.
 
 const prisma = new PrismaClient();
+
+/** Vercel may deliver JSON as object or string; undefined body must not throw on destructure. */
+function parseJsonBody(req: VercelRequest): Record<string, unknown> {
+  const raw = req.body as unknown;
+  if (raw == null) return {};
+  if (typeof raw === 'string') {
+    try {
+      return JSON.parse(raw) as Record<string, unknown>;
+    } catch {
+      return {};
+    }
+  }
+  if (typeof raw === 'object' && !Array.isArray(raw)) {
+    return raw as Record<string, unknown>;
+  }
+  return {};
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Set CORS headers to allow requests from all origins. (Ref 1). 
@@ -25,7 +43,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Only handles POST (signup or login); other methods get 405 below.
   if (req.method === 'POST') {
     try {
-      const { email, password, firstName, lastName } = req.body;
+      const body = parseJsonBody(req);
+      const email = typeof body.email === 'string' ? body.email : undefined;
+      const password = typeof body.password === 'string' ? body.password : undefined;
+      const firstName = typeof body.firstName === 'string' ? body.firstName : undefined;
+      const lastName = typeof body.lastName === 'string' ? body.lastName : undefined;
       
       console.log('Received request:', { email, hasPassword: !!password, firstName, lastName });
 
@@ -100,12 +122,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        // Return user info including isMatched and profileSetupComplete
+        const isAdmin = user.isAdmin;
+        if (isAdmin) {
+          const { signAdminToken } = await import('./jwtAdmin.js');
+          return res.status(200).json({
+            email: user.email,
+            name: user.name,
+            isMatched: user.isMatched,
+            profileSetupComplete: user.profileSetupComplete,
+            isAdmin: true,
+            adminToken: signAdminToken(user.email),
+          });
+        }
         return res.status(200).json({
           email: user.email,
           name: user.name,
           isMatched: user.isMatched,
           profileSetupComplete: user.profileSetupComplete,
+          isAdmin: false,
         });
       }
     } catch (error: any) {

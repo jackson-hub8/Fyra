@@ -3,7 +3,9 @@
 /// Defines the database schema for the application using Prisma ORM
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // Vercel serverless runs Linux (glibc + OpenSSL 3); include alongside native for local dev.
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
@@ -19,6 +21,7 @@ model Users {
   isActive             Boolean  @default(true)
   emailVerified        Boolean  @default(false)
   profileSetupComplete Boolean  @default(false)
+  isAdmin              Boolean  @default(false)
   createdAt            DateTime @default(now()) @db.Timestamp(6)
 
   // Relations
@@ -29,6 +32,8 @@ model Users {
   petPeeves            PetPeeves[]
   matchesAsUser1       Matches[] @relation("User1Matches")
   matchesAsUser2       Matches[] @relation("User2Matches")
+  possibleMatchesAsUser1 PossibleMatches[] @relation("PossibleMatchUser1")
+  possibleMatchesAsUser2 PossibleMatches[] @relation("PossibleMatchUser2")
 
   @@map("users")
 }
@@ -152,11 +157,28 @@ model SwipeActions {
   targetEmail String   @db.VarChar(255)
   action      String   @db.VarChar(10) // 'like' | 'pass'
   createdAt   DateTime @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime @updatedAt @db.Timestamp(6)
 
   @@unique([swiperEmail, targetEmail])
   @@index([swiperEmail])
   @@index([targetEmail])
   @@map("swipe_actions")
+}
+
+model PossibleMatches {
+  id              Int      @id @default(autoincrement())
+  userEmail1      String   @db.VarChar(255)
+  userEmail2      String   @db.VarChar(255)
+  similarityScore Float
+  createdAt       DateTime @default(now()) @db.Timestamp(6)
+
+  user1 Users @relation("PossibleMatchUser1", fields: [userEmail1], references: [email], onDelete: Cascade)
+  user2 Users @relation("PossibleMatchUser2", fields: [userEmail2], references: [email], onDelete: Cascade)
+
+  @@unique([userEmail1, userEmail2])
+  @@index([userEmail1])
+  @@index([userEmail2])
+  @@map("possible_matches")
 }
 
 model Matches {

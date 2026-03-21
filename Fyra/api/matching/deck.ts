@@ -3,6 +3,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
+import { isPairBlocked } from '../lib/matching.js';
 
 const prisma = new PrismaClient();
 
@@ -51,6 +52,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       matchedSet.add(m.userEmail2);
     }
 
+    const possibleRows = await prisma.possibleMatches.findMany({
+      where: {
+        OR: [{ userEmail1: email }, { userEmail2: email }],
+      },
+      select: { userEmail1: true, userEmail2: true },
+    });
+    const possiblePartnerSet = new Set<string>();
+    for (const p of possibleRows) {
+      possiblePartnerSet.add(p.userEmail1 === email ? p.userEmail2 : p.userEmail1);
+    }
+
     const users = await prisma.users.findMany({
       where: {
         email: { not: email },
@@ -61,9 +73,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       select: { email: true },
     });
 
-    const deck = users
-      .map((u) => u.email)
-      .filter((e) => !swipedSet.has(e) && !matchedSet.has(e));
+    const viewerQ = await prisma.privateQuestionnaire.findUnique({
+      where: { userEmail: email },
+    });
+
+    const candidateEmails = users.map((u) => u.email);
+    const targetQs = await prisma.privateQuestionnaire.findMany({
+      where: { userEmail: { in: candidateEmails } },
+    });
+    const qByEmail = new Map(targetQs.map((q) => [q.userEmail, q]));
+
+    const deck = candidateEmails.filter((e) => {
+      if (swipedSet.has(e) || matchedSet.has(e)) return false;
+      if (possiblePartnerSet.has(e)) return false;
+      const tq = qByEmail.get(e);
+      if (viewerQ && tq && isPairBlocked(viewerQ, tq)) return false;
+      return true;
+    });
 
     return res.status(200).json({ deck });
   } catch (e) {

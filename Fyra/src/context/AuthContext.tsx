@@ -11,6 +11,9 @@ export type User = {
   name: string;
   isMatched?: boolean;
   profileSetupComplete?: boolean;
+  /** Set when logging in as admin; use adminToken for admin API Authorization header. */
+  isAdmin?: boolean;
+  adminToken?: string;
 };
 
 type MatchingDeckPreload = { userEmail: string; deck: string[] };
@@ -114,11 +117,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!user?.email || user.isMatched || !user.profileSetupComplete) {
+    if (!user?.email || user.isAdmin || user.isMatched || !user.profileSetupComplete) {
       return;
     }
     void preloadMatchingDeck(user.email);
-  }, [user?.email, user?.isMatched, user?.profileSetupComplete, preloadMatchingDeck]);
+  }, [user?.email, user?.isAdmin, user?.isMatched, user?.profileSetupComplete, preloadMatchingDeck]);
 
   return (
     <AuthContext.Provider

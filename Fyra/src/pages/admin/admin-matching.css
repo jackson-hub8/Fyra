@@ -1,0 +1,245 @@
+/* Admin matching: align with profile/unmatched layout + scroll panes + pair modal */
+
+.admin-matching-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.admin-matching-split {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+  max-height: calc(100vh - 200px);
+}
+
+.admin-matching-column {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.admin-matching-column h3 {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #333;
+  flex-shrink: 0;
+}
+
+/* Empty state: hint centered horizontally under the "Possible matches" title */
+.admin-possible-empty {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 4px;
+}
+
+.admin-possible-empty p {
+  margin: 0;
+  color: #666;
+  text-align: center;
+  width: 100%;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.admin-matching-scroll {
+  list-style: none;
+  margin: 0;
+  padding: 0 4px 0 0;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-matching-scroll li {
+  margin-bottom: 8px;
+}
+
+.admin-matching-scroll li:last-child {
+  margin-bottom: 0;
+}
+
+.admin-possible-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fafafa;
+}
+
+.admin-possible-card .admin-possible-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-matched-block {
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 16px;
+  max-height: calc(100vh - 220px);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.admin-matched-block h3 {
+  flex-shrink: 0;
+}
+
+.admin-matched-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-matched-scroll li {
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.admin-manual-block {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.admin-pair-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.admin-pair-modal {
+  background: white;
+  border-radius: 12px;
+  max-width: 960px;
+  width: 100%;
+  max-height: min(90vh, 900px);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.admin-pair-modal-header {
+  flex-shrink: 0;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-pair-modal-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #333;
+}
+
+.admin-pair-modal-close {
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+}
+
+.admin-pair-modal-close:hover {
+  background: #eee;
+}
+
+.admin-pair-modal-body {
+  padding: 16px 20px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.admin-pair-modal-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.admin-q-person h4 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  color: #a12d2e;
+}
+
+.admin-q-email {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: #666;
+  word-break: break-all;
+}
+
+.admin-q-person dl {
+  margin: 0;
+}
+
+.admin-q-row {
+  margin-bottom: 12px;
+}
+
+.admin-q-row dt {
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 4px;
+}
+
+.admin-q-row dd {
+  margin: 0;
+  font-size: 14px;
+  color: #222;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (max-width: 768px) {
+  .admin-matching-split {
+    flex-direction: column;
+    max-height: none;
+  }
+
+  .admin-matching-column {
+    max-height: 45vh;
+  }
+
+  .admin-pair-modal-columns {
+    grid-template-columns: 1fr;
+  }
+}
