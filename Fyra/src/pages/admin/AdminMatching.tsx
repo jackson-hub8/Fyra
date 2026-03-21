@@ -5,6 +5,11 @@ import '../auth/login.css';
 import '../profile/profile.css';
 import '../home.css';
 import './admin-matching.css';
+import {
+  PRIVATE_QUESTIONNAIRE_FIELD_ORDER,
+  formatPrivateQuestionnaireAnswer,
+  getPrivateQuestionnaireAdminLabel,
+} from '../../config/profileQuestions';
 
 type UnmatchedUser = { email: string; name: string };
 type PossibleRow = {
@@ -21,39 +26,6 @@ type MatchedPair = {
   user1: { email: string; name: string };
   user2: { email: string; name: string };
 };
-
-/** Private questionnaire fields in display order with plain-language labels. */
-const QUESTIONNAIRE_FIELDS: { key: string; label: string }[] = [
-  { key: 'gender', label: 'Gender identity' },
-  { key: 'sexAssignedAtBirth', label: 'Sex assigned at birth' },
-  { key: 'adaAccommodations', label: 'ADA accommodations' },
-  { key: 'animalAllergies', label: 'Animal allergies' },
-  { key: 'varsitySport', label: 'Varsity sports' },
-  { key: 'smoking', label: 'Nicotine / smoking' },
-  { key: 'cannabis', label: 'Cannabis' },
-  { key: 'alcohol', label: 'Alcohol' },
-  { key: 'roomTemp', label: 'Room temperature preference' },
-  { key: 'bedroomDescription', label: 'Bedroom organization' },
-  { key: 'sleepType', label: 'Sleep schedule type' },
-  { key: 'weekdayBedtime', label: 'Typical weekday bedtime' },
-  { key: 'freeTime', label: 'Free time & hobbies' },
-  { key: 'campusActivity', label: 'Campus activity level' },
-  { key: 'visitorFrequency', label: 'How often visitors come by' },
-  { key: 'weekendHomeFrequency', label: 'Weekends away from campus' },
-  { key: 'firstClassTime', label: 'First class time' },
-  { key: 'musicPreference', label: 'Music preference' },
-  { key: 'politicalViews', label: 'Political views' },
-  { key: 'religion', label: 'Religion / spirituality' },
-  { key: 'studyEnvironment', label: 'Preferred study environment' },
-  { key: 'intendedMajor', label: 'Intended major / focus' },
-  { key: 'vehicleToCampus', label: 'Transportation to campus' },
-];
-
-function formatAnswer(value: unknown): string {
-  if (value === null || value === undefined) return '—';
-  const s = String(value).trim();
-  return s.length === 0 ? '—' : s;
-}
 
 function QuestionnairePanel({
   heading,
@@ -78,10 +50,10 @@ function QuestionnairePanel({
       <h4>{heading}</h4>
       <p className="admin-q-email">{email}</p>
       <dl>
-        {QUESTIONNAIRE_FIELDS.map(({ key, label }) => (
+        {PRIVATE_QUESTIONNAIRE_FIELD_ORDER.map((key) => (
           <div key={key} className="admin-q-row">
-            <dt>{label}</dt>
-            <dd>{formatAnswer(data[key])}</dd>
+            <dt>{getPrivateQuestionnaireAdminLabel(key)}</dt>
+            <dd>{formatPrivateQuestionnaireAnswer(key, data[key])}</dd>
           </div>
         ))}
       </dl>

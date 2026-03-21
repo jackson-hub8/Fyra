@@ -73,13 +73,13 @@ export const PROFILE_QUESTIONS: QuestionDef[][] = [
     },
     {
       id: 'sexAssignedAtBirth',
-      label: 'Sex assigned at birth? *',
+      label: 'What was your sex assigned at birth? *',
       required: true,
       type: 'select',
       options: [
         { value: '', label: 'Select...' },
-        { value: 'Yes', label: 'Yes' },
-        { value: 'No', label: 'No' },
+        { value: 'Female', label: 'Female' },
+        { value: 'Male', label: 'Male' },
       ],
     },
     {
@@ -448,3 +448,122 @@ export const PROFILE_QUESTIONS: QuestionDef[][] = [
     },
   ],
 ];
+
+/** Same delimiters as `ProfileSetup` and `api/lib/matching`. */
+export const ALLERGIES_DELIMITER = ' | ';
+export const SPORTS_DELIMITER = ' | ';
+export const CHECKLIST_DELIMITER = ' | ';
+
+const FLAT_PROFILE_QUESTIONS = PROFILE_QUESTIONS.flat();
+
+export function getPrivateQuestionDef(
+  id: keyof PrivateQuestionnairePayload,
+): QuestionDef | undefined {
+  return FLAT_PROFILE_QUESTIONS.find((q) => q.id === id);
+}
+
+/** Stored DB values that should map to a current select option (e.g. older seeds). */
+const LEGACY_SELECT_ALIASES: Partial<Record<keyof PrivateQuestionnairePayload, Record<string, string>>> = {
+  gender: {
+    Man: 'Male',
+    Woman: 'Female',
+  },
+};
+
+function selectLabelForStoredValue(def: QuestionDef, raw: string): string | null {
+  if (!def.options) return null;
+  const s = raw.trim();
+  if (s.startsWith('Other:')) {
+    const other = def.options.find((o) => o.value === 'Other');
+    const rest = s.slice(6).trim();
+    if (other) return rest ? `${other.label}: ${rest}` : other.label;
+  }
+  let opt = def.options.find((o) => o.value === s);
+  if (opt) return opt.label;
+  const aliases = LEGACY_SELECT_ALIASES[def.id as keyof PrivateQuestionnairePayload];
+  const mapped = aliases?.[s];
+  if (mapped) {
+    opt = def.options.find((o) => o.value === mapped);
+    if (opt) return opt.label;
+  }
+  return null;
+}
+
+/**
+ * Format a stored questionnaire field for admin (labels match profile setup options).
+ */
+export function formatPrivateQuestionnaireAnswer(
+  fieldId: keyof PrivateQuestionnairePayload,
+  raw: unknown,
+): string {
+  if (raw == null) return '—';
+  const s = String(raw).trim();
+  if (s === '') return '—';
+  const def = getPrivateQuestionDef(fieldId);
+  if (!def) return s;
+
+  switch (def.type) {
+    case 'select':
+      return selectLabelForStoredValue(def, s) ?? s;
+    case 'text':
+    case 'textarea':
+    case 'tel':
+      return s;
+    case 'tags':
+      return s.split(',').map((t) => t.trim()).filter(Boolean).join(', ') || '—';
+    case 'allergies': {
+      if (!def.allergyCategories) return s;
+      const flat = def.allergyCategories.flatMap((c) => c.options);
+      return s
+        .split(ALLERGIES_DELIMITER)
+        .map((p) => p.trim())
+        .filter(Boolean)
+        .map((t) => {
+          if (t.startsWith('Other:')) {
+            const rest = t.slice(6).trim();
+            return rest ? `Other (please specify): ${rest}` : 'Other (please specify)';
+          }
+          const o = flat.find((x) => x.value === t);
+          return o ? o.label : t;
+        })
+        .join('; ') || '—';
+    }
+    case 'sports': {
+      if (!def.sportCategories) return s;
+      const flat = def.sportCategories.flatMap((c) => c.options);
+      return s
+        .split(SPORTS_DELIMITER)
+        .map((p) => p.trim())
+        .filter(Boolean)
+        .map((t) => {
+          const o = flat.find((x) => x.value === t);
+          return o ? o.label : t;
+        })
+        .join('; ') || '—';
+    }
+    case 'checklist': {
+      if (!def.checklistOptions) return s;
+      return s
+        .split(CHECKLIST_DELIMITER)
+        .map((p) => p.trim())
+        .filter(Boolean)
+        .map((t) => {
+          const o = def.checklistOptions!.find((x) => x.value === t);
+          return o ? o.label : t;
+        })
+        .join('; ') || '—';
+    }
+    default:
+      return s;
+  }
+}
+
+/** Question text as shown in profile setup, without the trailing *. */
+export function getPrivateQuestionnaireAdminLabel(fieldId: keyof PrivateQuestionnairePayload): string {
+  const def = getPrivateQuestionDef(fieldId);
+  if (!def) return String(fieldId);
+  return def.label.replace(/\s*\*\s*$/, '').trim();
+}
+
+export const PRIVATE_QUESTIONNAIRE_FIELD_ORDER: (keyof PrivateQuestionnairePayload)[] =
+  FLAT_PROFILE_QUESTIONS.map((q) => q.id);
