@@ -77,17 +77,6 @@
   z-index: 0;
 }
 
-.matching-stack-card-top {
-  pointer-events: auto;
-  touch-action: pan-y;
-  cursor: grab;
-  user-select: none;
-}
-
-.matching-stack-card-top:active {
-  cursor: grabbing;
-}
-
 .matching-stack-card-back:nth-child(1) {
   --stack-index: 1;
   z-index: 1;
@@ -98,25 +87,21 @@
   z-index: 0;
 }
 
-/* Top card: in flow so wrapper height = content; drag transform + optional exit */
+/* Top card: in flow so wrapper height = content; transform is inline (drag + fly-off). */
 .matching-stack-card-top {
   position: relative;
   z-index: 2;
   height: auto;
-  pointer-events: auto;
   overflow: visible;
-  transform: translateX(var(--matching-drag-offset, 0)) rotate(var(--matching-drag-rotate, 0deg));
-  transition: transform 0.28s ease-out;
+  will-change: transform;
+  pointer-events: auto;
+  touch-action: pan-y;
+  cursor: grab;
+  user-select: none;
 }
 
-.matching-stack-card-top.matching-card-exit-right {
-  transform: translateX(150%) rotate(15deg);
-  pointer-events: none;
-}
-
-.matching-stack-card-top.matching-card-exit-left {
-  transform: translateX(-150%) rotate(-15deg);
-  pointer-events: none;
+.matching-stack-card-top:active {
+  cursor: grabbing;
 }
 
 .matching-stack-card-inner {
