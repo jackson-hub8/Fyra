@@ -7,8 +7,15 @@ import { put, del } from '@vercel/blob';
 
 const prisma = new PrismaClient();
 
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'] as const;
 const MAX_BYTES = 4 * 1024 * 1024; // 4MB (Vercel body limit 4.5MB; leave room for JSON)
+
+function extForContentType(contentType: string): string {
+  if (contentType === 'image/png') return 'png';
+  if (contentType === 'image/webp') return 'webp';
+  if (contentType === 'image/heic' || contentType === 'image/heif') return 'heic';
+  return 'jpg';
+}
 
 function setCors(res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -54,7 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Invalid file: photo (base64) required' });
     }
     if (!ALLOWED_TYPES.includes(contentType as (typeof ALLOWED_TYPES)[number])) {
-      return res.status(400).json({ error: 'Invalid file type. Use JPEG, PNG, or WebP.' });
+      return res.status(400).json({ error: 'Invalid file type. Use JPEG, PNG, WebP, or HEIC.' });
     }
 
     let buffer: Buffer;
@@ -70,7 +77,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Empty file' });
     }
 
-    const ext = contentType === 'image/png' ? 'png' : contentType === 'image/webp' ? 'webp' : 'jpg';
+    const ext = extForContentType(contentType);
     const pathname = `profile-photos/${encodeURIComponent(email)}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
 
     try {

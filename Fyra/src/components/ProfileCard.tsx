@@ -3,6 +3,11 @@
 /// Profile card: view/edit bio, photo, interests, daily life, pet peeves.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  isAllowedProfilePhotoFile,
+  MAX_PROFILE_PHOTO_BYTES,
+  profilePhotoContentTypeForUpload,
+} from '../lib/profilePhotoUpload';
 import './ProfileCard.css';
 
 type ProfileData = {
@@ -156,19 +161,16 @@ export default function ProfileCard({ email, readOnly = false }: ProfileCardProp
     setPhotoError('');
   };
 
-  const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-  const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
-
   const handlePhotoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file || !email) return;
     setPhotoError('');
-    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
-      setPhotoError('Use JPEG, PNG, or WebP.');
+    if (!isAllowedProfilePhotoFile(file)) {
+      setPhotoError('Use JPEG, PNG, WebP, or HEIC.');
       return;
     }
-    if (file.size > MAX_PHOTO_BYTES) {
+    if (file.size > MAX_PROFILE_PHOTO_BYTES) {
       setPhotoError('File too large. Max 4MB.');
       return;
     }
@@ -187,7 +189,11 @@ export default function ProfileCard({ email, readOnly = false }: ProfileCardProp
       const res = await fetch('/api/profiles/photo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, photo: base64, contentType: file.type }),
+        body: JSON.stringify({
+          email,
+          photo: base64,
+          contentType: profilePhotoContentTypeForUpload(file),
+        }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string; photoUrl?: string };
       if (!res.ok) {
@@ -240,7 +246,7 @@ export default function ProfileCard({ email, readOnly = false }: ProfileCardProp
                 <input
                   type="file"
                   ref={fileInputRef}
-                  accept="image/jpeg,image/png,image/webp"
+                  accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
                   className="profile-photo-file-input"
                   aria-label="Upload profile photo"
                   onChange={handlePhotoFile}

@@ -1,10 +1,12 @@
 /// Profile card used during profile setup: same layout as ProfileCard, always editable, controlled.
 
 import { useRef, useState } from 'react';
+import {
+  isAllowedProfilePhotoFile,
+  MAX_PROFILE_PHOTO_BYTES,
+  profilePhotoContentTypeForUpload,
+} from '../lib/profilePhotoUpload';
 import './ProfileCard.css';
-
-const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
 
 type Props = {
   email: string;
@@ -62,11 +64,11 @@ export default function ProfileCardSetup({
     e.target.value = '';
     if (!file || !email) return;
     setPhotoError('');
-    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
-      setPhotoError('Use JPEG, PNG, or WebP.');
+    if (!isAllowedProfilePhotoFile(file)) {
+      setPhotoError('Use JPEG, PNG, WebP, or HEIC.');
       return;
     }
-    if (file.size > MAX_PHOTO_BYTES) {
+    if (file.size > MAX_PROFILE_PHOTO_BYTES) {
       setPhotoError('File too large. Max 4MB.');
       return;
     }
@@ -85,7 +87,11 @@ export default function ProfileCardSetup({
       const res = await fetch('/api/profiles/photo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, photo: base64, contentType: file.type }),
+        body: JSON.stringify({
+          email,
+          photo: base64,
+          contentType: profilePhotoContentTypeForUpload(file),
+        }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string; photoUrl?: string };
       if (!res.ok) throw new Error(data.error ?? 'Upload failed');
@@ -125,7 +131,7 @@ export default function ProfileCardSetup({
           <input
             type="file"
             ref={fileInputRef}
-            accept="image/jpeg,image/png,image/webp"
+            accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
             className="profile-photo-file-input"
             aria-label="Upload profile photo"
             onChange={handlePhotoFile}
