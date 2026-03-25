@@ -46,19 +46,6 @@
   font-family: var(--font-sans);
 }
 
-.header-settings-link {
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px;
-  line-height: 1;
-}
-
-.header-settings-link:hover {
-  opacity: 0.85;
-}
-
 .header-admin-link {
   color: white;
   font-size: 14px;

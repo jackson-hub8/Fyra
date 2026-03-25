@@ -17,8 +17,6 @@ import UnmatchedLayout from './pages/unmatched/UnmatchedLayout';
 import UnmatchedIndex from './pages/unmatched/UnmatchedIndex';
 import UnmatchedSearch from './pages/unmatched/UnmatchedSearch';
 import UnmatchedMatching from './pages/unmatched/UnmatchedMatching';
-import UnmatchedSettings from './pages/unmatched/UnmatchedSettings';
-import Settings from './pages/settings/Settings';
 import AdminMatching from './pages/admin/AdminMatching';
 import { AdminRoute } from './pages/admin/AdminRoute';
 
@@ -37,12 +35,10 @@ const App = () => {
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/calendar/new" element={<CreateEvent />} />
         <Route path="/calendar/edit/:id" element={<EditEvent />} />
-        <Route path="/settings" element={<Settings />} />
         <Route path="/unmatched" element={<UnmatchedLayout />}>
           <Route index element={<UnmatchedIndex />} />
           <Route path="search" element={<UnmatchedSearch />} />
           <Route path="matching" element={<UnmatchedMatching />} />
-          <Route path="settings" element={<UnmatchedSettings />} />
         </Route>
         <Route
           path="/admin"

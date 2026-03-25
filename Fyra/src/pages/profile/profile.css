@@ -56,19 +56,6 @@
   font-size: 14px;
 }
 
-.profile-header .header-settings-link {
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px;
-  line-height: 1;
-}
-
-.profile-header .header-settings-link:hover {
-  opacity: 0.85;
-}
-
 .profile-header .sign-out-button {
   background: none;
   border: none;
