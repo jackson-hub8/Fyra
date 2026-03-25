@@ -1,6 +1,6 @@
 .time-picker {
   display: grid;
-  grid-template-columns: minmax(3.5rem, 1fr) auto minmax(4.75rem, 1.35fr) minmax(5.25rem, 1fr);
+  grid-template-columns: minmax(4.75rem, 1fr) auto minmax(4.75rem, 1.35fr) minmax(5.25rem, 1fr);
   gap: 6px 8px;
   align-items: center;
   width: 100%;

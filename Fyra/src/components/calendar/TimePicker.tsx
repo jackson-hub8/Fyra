@@ -2,7 +2,14 @@
 
 import './TimePicker.css';
 
-const HOURS_12 = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+/** Display/value in select: always two digits (01–12) so the closed field never shows a single digit. */
+const HOURS_12 = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
+
+function hourToSelectValue(h12: string): string {
+  const n = parseInt(h12, 10);
+  if (Number.isNaN(n) || n < 1 || n > 12) return '12';
+  return String(n).padStart(2, '0');
+}
 const MINUTES = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
 
 function parseTimeValue(value: string): { h24: number; minute: string } {
@@ -70,7 +77,7 @@ export default function TimePicker({
       <select
         id={id}
         className="time-picker-select time-picker-select--hour"
-        value={h12}
+        value={hourToSelectValue(h12)}
         disabled={disabled}
         onChange={(e) => commit(e.target.value, minute, period)}
       >
