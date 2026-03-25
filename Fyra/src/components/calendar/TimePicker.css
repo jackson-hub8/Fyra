@@ -1,17 +1,24 @@
 .time-picker {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(3.5rem, 1fr) auto minmax(4.75rem, 1.35fr) minmax(5.25rem, 1fr);
+  gap: 6px 8px;
   align-items: center;
-  gap: 6px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   font-family: var(--font-sans);
 }
 
 .time-picker-select {
-  min-width: 0;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
   padding: 10px 12px;
   border: 2px solid #e0e0e0;
   border-radius: 8px;
   font-size: 16px;
   font-family: var(--font-sans);
+  line-height: 1.25;
   background-color: white;
   color: #333;
   cursor: pointer;
@@ -21,6 +28,8 @@
   background-repeat: no-repeat;
   background-position: right 10px center;
   padding-right: 32px;
+  /* WebKit: avoid clipping the closed select’s label when the grid cell is tight */
+  text-align: left;
 }
 
 .time-picker-select:focus {
@@ -33,16 +42,7 @@
   cursor: not-allowed;
 }
 
-.time-picker-select--hour {
-  flex: 0 0 72px;
-}
-
-.time-picker-select--minute {
-  flex: 1;
-}
-
 .time-picker-select--period {
-  flex: 0 0 88px;
   padding-left: 10px;
   padding-right: 28px;
 }
@@ -51,7 +51,21 @@
   font-size: 18px;
   font-weight: 600;
   color: #333;
-  flex-shrink: 0;
   line-height: 1;
   user-select: none;
+  justify-self: center;
+}
+
+@media (max-width: 520px) {
+  .time-picker {
+    grid-template-columns: 1fr auto 1fr;
+    grid-template-rows: auto auto;
+    row-gap: 10px;
+    column-gap: 8px;
+  }
+
+  .time-picker-select--period {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
 }
