@@ -20,19 +20,22 @@ import { formatEventTimeDisplay } from '../utils/formatTime12h';
 
 const Home = () => {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
-  const { getEventsForDate, getEventColor, deleteEvent, roomMembers } = useEvents();
+  const { user, signOut, setUser } = useAuth();
+  const { getEventsForDate, getEventColor, deleteEvent, roomMembers, matchId, refetch: refetchEvents } =
+    useEvents();
   const {
     getChoresForWeek,
     addChore,
     updateChore,
     deleteChore,
+    refetch: refetchChores,
   } = useChores();
   const [detailEvent, setDetailEvent] = useState<CalendarEvent | null>(null);
   const [dayViewDate, setDayViewDate] = useState<Date | null>(null);
   const [detailChore, setDetailChore] = useState<Chore | null>(null);
   const [showAddChore, setShowAddChore] = useState(false);
   const [editChore, setEditChore] = useState<Chore | null>(null);
+  const [adminUnmatchBusy, setAdminUnmatchBusy] = useState(false);
 
   useEffect(() => {
     if (!user?.email) {
@@ -141,6 +144,43 @@ const Home = () => {
     return d ? d.dayName : dueDate;
   }
 
+  const handleAdminUnmatchRoom = async () => {
+    const token = user?.adminToken;
+    if (!token || matchId == null || !user?.email) return;
+    if (
+      !window.confirm(
+        'Unmatch this room? Both roommates become unmatched and their shared calendar and chores are permanently removed.',
+      )
+    ) {
+      return;
+    }
+    setAdminUnmatchBusy(true);
+    try {
+      const res = await fetch('/api/admin/unmatch-room', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ matchId }),
+      });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) throw new Error(data.error ?? 'Unmatch failed');
+      setUser({
+        ...user,
+        isMatched: false,
+      });
+      await refetchEvents();
+      await refetchChores();
+      if (user.isAdmin) {
+        navigate('/admin');
+      } else {
+        navigate('/unmatched');
+      }
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Unmatch failed');
+    } finally {
+      setAdminUnmatchBusy(false);
+    }
+  };
+
   return (
     <div className="home-page">
       <div className="home-header">
@@ -150,6 +190,11 @@ const Home = () => {
         </div>
         <div className="page-title">Home</div>
         <div className="header-right">
+          {user.isAdmin && (
+            <Link to="/admin" className="header-admin-link">
+              Admin
+            </Link>
+          )}
           <Link to="/settings" className="header-settings-link" aria-label="Settings">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           </Link>
@@ -258,6 +303,21 @@ const Home = () => {
                   ))
                 : <span className="roommate-name">—</span>}
             </div>
+            {user.isAdmin && user.adminToken && matchId != null && (
+              <div className="home-admin-unmatch">
+                <p className="home-admin-unmatch-hint">
+                  Admin: remove this roommate pair. Both users return to unmatched; shared calendar and chores are deleted.
+                </p>
+                <button
+                  type="button"
+                  className="home-admin-unmatch-btn"
+                  disabled={adminUnmatchBusy}
+                  onClick={() => void handleAdminUnmatchRoom()}
+                >
+                  {adminUnmatchBusy ? 'Working…' : 'Unmatch room'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
