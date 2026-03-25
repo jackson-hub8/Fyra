@@ -3,6 +3,7 @@
 /// Profile card: view/edit bio, photo, interests, daily life, pet peeves.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import {
   isAllowedProfilePhotoFile,
   MAX_PROFILE_PHOTO_BYTES,
@@ -24,9 +25,11 @@ type PetPeeve = { id: number; petPeeve: string };
 type ProfileCardProps = { email: string; readOnly?: boolean };
 
 export default function ProfileCard({ email, readOnly = false }: ProfileCardProps) {
-  const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [petPeeves, setPetPeeves] = useState<PetPeeve[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { peekProfileCardCache } = useAuth();
+  const cached = email ? peekProfileCardCache(email) : null;
+  const [profile, setProfile] = useState<ProfileData | null>(() => cached?.profile ?? null);
+  const [petPeeves, setPetPeeves] = useState<PetPeeve[]>(() => cached?.petPeeves ?? []);
+  const [loading, setLoading] = useState(() => !cached);
   const [error, setError] = useState('');
   const [editing, setEditing] = useState(false);
   const [editBio, setEditBio] = useState('');
@@ -68,8 +71,31 @@ export default function ProfileCard({ email, readOnly = false }: ProfileCardProp
 
   useEffect(() => {
     if (!email) return;
+    if (readOnly) {
+      const cachedNow = peekProfileCardCache(email);
+      if (cachedNow) {
+        setProfile(cachedNow.profile);
+        setPetPeeves(cachedNow.petPeeves);
+        setEditBio(cachedNow.profile.bio ?? '');
+        setEditInterests(
+          (cachedNow.profile.topInterests ?? '')
+            .split(/[\n,]+/)
+            .map((s) => s.trim())
+            .filter(Boolean)
+        );
+        setEditDailyLife(
+          (cachedNow.profile.dailyLife ?? '')
+            .split(/[\n,]+/)
+            .map((s) => s.trim())
+            .filter(Boolean)
+        );
+        setEditPetPeeves(cachedNow.petPeeves.map((x) => x.petPeeve));
+        setLoading(false);
+        return;
+      }
+    }
     fetchProfile();
-  }, [email, fetchProfile]);
+  }, [email, readOnly, fetchProfile, peekProfileCardCache]);
 
   const addTopInterest = () => {
     const v = topInterestsInput.trim();

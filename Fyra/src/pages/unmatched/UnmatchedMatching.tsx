@@ -14,9 +14,10 @@ export default function UnmatchedMatching() {
   const { user, peekMatchingDeckPreloadForEmail, consumeMatchingDeckPreloadForEmail, preloadMatchingDeck } =
     useAuth();
   const navigate = useNavigate();
-  const [deck, setDeck] = useState<string[]>([]);
+  const deckPeek = user?.email ? peekMatchingDeckPreloadForEmail(user.email) : null;
+  const [deck, setDeck] = useState<string[]>(() => deckPeek ?? []);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => deckPeek === null);
   const [error, setError] = useState('');
   const [swiping, setSwiping] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
