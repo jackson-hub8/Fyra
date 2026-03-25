@@ -6,6 +6,7 @@ import {
   MAX_PROFILE_PHOTO_BYTES,
   profilePhotoContentTypeForUpload,
 } from '../lib/profilePhotoUpload';
+import { MIN_PUBLIC_PROFILE_LIST_ITEMS } from '../lib/publicProfileLists';
 import './ProfileCard.css';
 
 type Props = {
@@ -159,18 +160,19 @@ export default function ProfileCardSetup({
           {photoError && <div className="profile-photo-error">{photoError}</div>}
           <div className="profile-card-name">{name.trim() || email}</div>
           <div className="profile-edit-form">
-            <label>Bio *</label>
+            <label>Bio</label>
             <textarea
               value={bio}
               onChange={(e) => onBioChange(e.target.value)}
-              placeholder="A short intro, e.g. major, hometown, interests..."
+              placeholder="A short intro..."
               rows={5}
             />
           </div>
         </div>
         <div className="profile-details">
           <div className="profile-edit-form">
-            <label>Top interests *</label>
+            <label>Top interests</label>
+            <p className="profile-field-hint">At least {MIN_PUBLIC_PROFILE_LIST_ITEMS} items required.</p>
             <div className="profile-petpeeve-list">
               {topInterests.map((item, i) => (
                 <span key={i} className="profile-petpeeve-tag">
@@ -195,7 +197,8 @@ export default function ProfileCardSetup({
             </div>
           </div>
           <div className="profile-edit-form">
-            <label>Daily life *</label>
+            <label>Daily life</label>
+            <p className="profile-field-hint">At least {MIN_PUBLIC_PROFILE_LIST_ITEMS} items required.</p>
             <div className="profile-petpeeve-list">
               {dailyLife.map((item, i) => (
                 <span key={i} className="profile-petpeeve-tag">
@@ -220,7 +223,8 @@ export default function ProfileCardSetup({
             </div>
           </div>
           <div className="profile-edit-form">
-            <label>Roommate pet peeves *</label>
+            <label>Roommate pet peeves</label>
+            <p className="profile-field-hint">At least {MIN_PUBLIC_PROFILE_LIST_ITEMS} items required.</p>
             <div className="profile-petpeeve-list">
               {petPeeves.map((pp, i) => (
                 <span key={i} className="profile-petpeeve-tag">

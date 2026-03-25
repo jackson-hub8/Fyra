@@ -3,6 +3,7 @@
 /// API for user profile (display): bio, photo, topInterests, dailyLife. GET by user, PATCH update.
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
+import { MIN_PUBLIC_PROFILE_LIST_ITEMS, parsePublicProfileList } from '../lib/publicProfileValidation.js';
 
 const prisma = new PrismaClient();
 
@@ -63,6 +64,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (body.topInterests !== undefined) data.topInterests = body.topInterests;
       if (body.dailyLife !== undefined) data.dailyLife = body.dailyLife;
       if (body.major !== undefined) data.major = body.major;
+
+      const existing = await prisma.userProfiles.findUnique({ where: { userEmail: email } });
+      const mergedTop = body.topInterests !== undefined ? body.topInterests : existing?.topInterests ?? null;
+      const mergedDaily = body.dailyLife !== undefined ? body.dailyLife : existing?.dailyLife ?? null;
+
+      const topItems = parsePublicProfileList(mergedTop);
+      const dailyItems = parsePublicProfileList(mergedDaily);
+      if (topItems.length < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
+        return res.status(400).json({
+          error: `Top interests must have at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} items.`,
+        });
+      }
+      if (dailyItems.length < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
+        return res.status(400).json({
+          error: `Daily life must have at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} items.`,
+        });
+      }
+
+      if (user.profileSetupComplete) {
+        const petCount = await prisma.petPeeves.count({ where: { userEmail: email } });
+        if (petCount < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
+          return res.status(400).json({
+            error: `Roommate pet peeves must have at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} items.`,
+          });
+        }
+      }
 
       const profile = await prisma.userProfiles.upsert({
         where: { userEmail: email },
