@@ -67,6 +67,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       where: {
         email: { not: email },
         isMatched: false,
+        isAdmin: false,
         profileSetupComplete: true,
         isActive: true,
       },
