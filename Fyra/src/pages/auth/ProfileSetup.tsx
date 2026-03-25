@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import { PROFILE_QUESTIONS } from '../../config/profileQuestions';
 import type { AllergyCategory, SportCategory } from '../../config/profileQuestions';
 import ProfileCardSetup from '../../components/ProfileCardSetup';
+import { MIN_PUBLIC_PROFILE_LIST_ITEMS } from '../../lib/publicProfileLists';
 import './login.css';
 
 const TOTAL_QUESTION_PAGES = PROFILE_QUESTIONS.length;
@@ -120,9 +121,9 @@ export default function ProfileSetup() {
 
   const isBuildProfileValid =
     bio.trim().length > 0 &&
-    topInterests.length > 0 &&
-    dailyLife.length > 0 &&
-    petPeeves.length > 0;
+    topInterests.length >= MIN_PUBLIC_PROFILE_LIST_ITEMS &&
+    dailyLife.length >= MIN_PUBLIC_PROFILE_LIST_ITEMS &&
+    petPeeves.length >= MIN_PUBLIC_PROFILE_LIST_ITEMS;
 
   const updateForm = (id: string, value: string) => {
     setForm((prev) => ({ ...prev, [id]: value }));
@@ -195,16 +196,16 @@ export default function ProfileSetup() {
       setError('Please provide a bio.');
       return false;
     }
-    if (topInterests.length === 0) {
-      setError('Please add at least one top interest.');
+    if (topInterests.length < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
+      setError(`Please add at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} top interests.`);
       return false;
     }
-    if (dailyLife.length === 0) {
-      setError('Please add at least one daily life item.');
+    if (dailyLife.length < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
+      setError(`Please add at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} daily life items.`);
       return false;
     }
-    if (petPeeves.length === 0) {
-      setError('Please add at least one roommate pet peeve.');
+    if (petPeeves.length < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
+      setError(`Please add at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} roommate pet peeves.`);
       return false;
     }
     return true;

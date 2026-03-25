@@ -59,6 +59,18 @@
   opacity: 0.85;
 }
 
+.header-admin-link {
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.header-admin-link:hover {
+  opacity: 0.9;
+}
+
 .university-text {
   font-size: 14px;
   margin-bottom: 8px;
@@ -373,6 +385,47 @@
 
 .roommate-content .roommate-name {
   margin: 0;
+}
+
+.home-admin-unmatch {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+  flex-shrink: 0;
+  width: 100%;
+}
+
+.home-admin-unmatch-hint {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.4;
+  margin: 0 0 12px;
+  text-align: center;
+}
+
+.home-admin-unmatch-btn {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  margin: 0 auto;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  border: 2px solid #a12d2e;
+  background: white;
+  color: #a12d2e;
+}
+
+.home-admin-unmatch-btn:hover:not(:disabled) {
+  background: #fdf5f5;
+}
+
+.home-admin-unmatch-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 .bottom-nav {

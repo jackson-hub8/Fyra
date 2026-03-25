@@ -55,6 +55,41 @@
   line-height: 1.45;
 }
 
+.admin-matched-pair-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-matched-pair-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-unmatch-btn {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  border: 2px solid #a12d2e;
+  background: white;
+  color: #a12d2e;
+}
+
+.admin-unmatch-btn:hover:not(:disabled) {
+  background: #fdf5f5;
+}
+
+.admin-unmatch-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .admin-matching-scroll {
   list-style: none;
   margin: 0;

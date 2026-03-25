@@ -84,6 +84,7 @@ export default function AdminMatching() {
   const [loading, setLoading] = useState(false);
   const [manualA, setManualA] = useState('');
   const [manualB, setManualB] = useState('');
+  const [unmatchLoadingId, setUnmatchLoadingId] = useState<number | null>(null);
 
   const loadUnmatched = useCallback(async () => {
     setLoading(true);
@@ -230,6 +231,33 @@ export default function AdminMatching() {
     }
   };
 
+  const unmatchRoom = async (matchId: number) => {
+    if (
+      !window.confirm(
+        'Unmatch this pair? Both users become unmatched and their shared calendar and chores are permanently removed.',
+      )
+    ) {
+      return;
+    }
+    setError('');
+    setUnmatchLoadingId(matchId);
+    try {
+      const res = await fetch('/api/admin/unmatch-room', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ matchId }),
+      });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) throw new Error(data.error ?? 'Unmatch failed');
+      await loadUnmatched();
+      await loadMatched();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error');
+    } finally {
+      setUnmatchLoadingId(null);
+    }
+  };
+
   const pageTitle = tab === 'unmatched' ? 'Unmatched' : 'Matched';
 
   return (
@@ -334,11 +362,21 @@ export default function AdminMatching() {
             </h3>
             <ul className="admin-matched-scroll">
               {matchedPairs.map((m) => (
-                <li key={m.id}>
-                  <strong>{m.user1.name}</strong> &amp; <strong>{m.user2.name}</strong>
-                  <div style={{ fontSize: 12, color: '#666' }}>
-                    {m.user1.email} — {m.user2.email}
+                <li key={m.id} className="admin-matched-pair-row">
+                  <div className="admin-matched-pair-info">
+                    <strong>{m.user1.name}</strong> &amp; <strong>{m.user2.name}</strong>
+                    <div style={{ fontSize: 12, color: '#666' }}>
+                      {m.user1.email} — {m.user2.email}
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    className="admin-unmatch-btn"
+                    disabled={unmatchLoadingId === m.id}
+                    onClick={() => void unmatchRoom(m.id)}
+                  >
+                    {unmatchLoadingId === m.id ? 'Working…' : 'Unmatch'}
+                  </button>
                 </li>
               ))}
             </ul>

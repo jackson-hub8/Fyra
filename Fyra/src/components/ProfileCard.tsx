@@ -3,11 +3,13 @@
 /// Profile card: view/edit bio, photo, interests, daily life, pet peeves.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import {
   isAllowedProfilePhotoFile,
   MAX_PROFILE_PHOTO_BYTES,
   profilePhotoContentTypeForUpload,
 } from '../lib/profilePhotoUpload';
+import { MIN_PUBLIC_PROFILE_LIST_ITEMS } from '../lib/publicProfileLists';
 import './ProfileCard.css';
 
 type ProfileData = {
@@ -24,9 +26,11 @@ type PetPeeve = { id: number; petPeeve: string };
 type ProfileCardProps = { email: string; readOnly?: boolean };
 
 export default function ProfileCard({ email, readOnly = false }: ProfileCardProps) {
-  const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [petPeeves, setPetPeeves] = useState<PetPeeve[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { peekProfileCardCache } = useAuth();
+  const cached = email ? peekProfileCardCache(email) : null;
+  const [profile, setProfile] = useState<ProfileData | null>(() => cached?.profile ?? null);
+  const [petPeeves, setPetPeeves] = useState<PetPeeve[]>(() => cached?.petPeeves ?? []);
+  const [loading, setLoading] = useState(() => !cached);
   const [error, setError] = useState('');
   const [editing, setEditing] = useState(false);
   const [editBio, setEditBio] = useState('');
@@ -68,8 +72,31 @@ export default function ProfileCard({ email, readOnly = false }: ProfileCardProp
 
   useEffect(() => {
     if (!email) return;
+    if (readOnly) {
+      const cachedNow = peekProfileCardCache(email);
+      if (cachedNow) {
+        setProfile(cachedNow.profile);
+        setPetPeeves(cachedNow.petPeeves);
+        setEditBio(cachedNow.profile.bio ?? '');
+        setEditInterests(
+          (cachedNow.profile.topInterests ?? '')
+            .split(/[\n,]+/)
+            .map((s) => s.trim())
+            .filter(Boolean)
+        );
+        setEditDailyLife(
+          (cachedNow.profile.dailyLife ?? '')
+            .split(/[\n,]+/)
+            .map((s) => s.trim())
+            .filter(Boolean)
+        );
+        setEditPetPeeves(cachedNow.petPeeves.map((x) => x.petPeeve));
+        setLoading(false);
+        return;
+      }
+    }
     fetchProfile();
-  }, [email, fetchProfile]);
+  }, [email, readOnly, fetchProfile, peekProfileCardCache]);
 
   const addTopInterest = () => {
     const v = topInterestsInput.trim();
@@ -107,6 +134,18 @@ export default function ProfileCard({ email, readOnly = false }: ProfileCardProp
   const saveEdit = async () => {
     if (!email) return;
     setError('');
+    if (editInterests.length < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
+      setError(`Top interests must have at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} items.`);
+      return;
+    }
+    if (editDailyLife.length < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
+      setError(`Daily life must have at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} items.`);
+      return;
+    }
+    if (editPetPeeves.length < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
+      setError(`Roommate pet peeves must have at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} items.`);
+      return;
+    }
     setSaving(true);
     try {
       const interests = editInterests;
@@ -296,6 +335,7 @@ export default function ProfileCard({ email, readOnly = false }: ProfileCardProp
               <>
                 <div className="profile-edit-form">
                   <label>Top interests</label>
+                  <p className="profile-field-hint">At least {MIN_PUBLIC_PROFILE_LIST_ITEMS} items required.</p>
                   <div className="profile-petpeeve-list">
                     {editInterests.map((item, i) => (
                       <span key={i} className="profile-petpeeve-tag">
@@ -321,6 +361,7 @@ export default function ProfileCard({ email, readOnly = false }: ProfileCardProp
                 </div>
                 <div className="profile-edit-form">
                   <label>Daily life</label>
+                  <p className="profile-field-hint">At least {MIN_PUBLIC_PROFILE_LIST_ITEMS} items required.</p>
                   <div className="profile-petpeeve-list">
                     {editDailyLife.map((item, i) => (
                       <span key={i} className="profile-petpeeve-tag">
@@ -346,6 +387,7 @@ export default function ProfileCard({ email, readOnly = false }: ProfileCardProp
                 </div>
                 <div className="profile-edit-form">
                   <label>Roommate pet peeves</label>
+                  <p className="profile-field-hint">At least {MIN_PUBLIC_PROFILE_LIST_ITEMS} items required.</p>
                   <div className="profile-petpeeve-list">
                     {editPetPeeves.map((pp, i) => (
                       <span key={i} className="profile-petpeeve-tag">
