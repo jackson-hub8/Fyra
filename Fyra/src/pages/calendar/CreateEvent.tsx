@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useEvents } from '../../context/EventsContext';
 import '../home.css';
 import './createEvent.css';
+import TimePicker from '../../components/calendar/TimePicker';
 
 const toYMD = (d: Date) => {
   const y = d.getFullYear();
@@ -164,24 +165,25 @@ const CreateEvent = () => {
             <div className="form-row">
               <div className="form-group">
                 <label htmlFor="startTime">Start time *</label>
-                <input
+                <TimePicker
                   id="startTime"
-                  type="time"
                   value={startTime}
-                  onChange={(e) => {
-                  const next = e.target.value;
-                  setStartTime(next);
-                  setEndTime(addOneHour(next));
-                }}
+                  minuteSelectAriaLabel="Start time, minutes"
+                  periodSelectAriaLabel="Start time, AM or PM"
+                  onChange={(next) => {
+                    setStartTime(next);
+                    setEndTime(addOneHour(next));
+                  }}
                 />
               </div>
               <div className="form-group">
                 <label htmlFor="endTime">End time *</label>
-                <input
+                <TimePicker
                   id="endTime"
-                  type="time"
                   value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
+                  minuteSelectAriaLabel="End time, minutes"
+                  periodSelectAriaLabel="End time, AM or PM"
+                  onChange={setEndTime}
                 />
                 {touched && !timeValid && (
                   <span className="field-error">End time must be after start time</span>

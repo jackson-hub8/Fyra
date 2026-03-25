@@ -2,6 +2,7 @@
 /// Shared modal to view event details with Edit/Delete actions.
 
 import type { CalendarEvent } from '../../context/EventsContext';
+import { formatTime12h } from '../../utils/formatTime12h';
 
 type EventDetailModalProps = {
   event: CalendarEvent;
@@ -36,7 +37,9 @@ export default function EventDetailModal({
               {event.startDate === event.endDate
                 ? event.startDate
                 : `${event.startDate} – ${event.endDate}`}
-              {event.isAllDay ? ' · All day' : ` · ${event.startTime} – ${event.endTime}`}
+              {event.isAllDay
+                ? ' · All day'
+                : ` · ${formatTime12h(event.startTime ?? '')} – ${formatTime12h(event.endTime ?? '')}`}
             </span>
           </div>
           {event.description && (

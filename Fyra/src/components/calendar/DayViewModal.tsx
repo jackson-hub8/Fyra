@@ -2,18 +2,12 @@
 /// Modal showing all events for a single day (scrollable list, click event for details).
 
 import type { CalendarEvent } from '../../context/EventsContext';
+import { formatEventTimeDisplay } from '../../utils/formatTime12h';
 
 const monthNames = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
-
-function formatEventTime(ev: CalendarEvent): string {
-  if (ev.isAllDay) return 'All day';
-  const start = ev.startTime ?? '';
-  const end = ev.endTime ?? '';
-  return `${start}${end ? ` – ${end}` : ''}`;
-}
 
 function formatDayLabel(d: Date): string {
   return `${monthNames[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
@@ -54,7 +48,7 @@ export default function DayViewModal({
                 style={{ borderLeftColor: getEventColor(ev.creatorId) }}
                 onClick={() => onEventClick(ev)}
               >
-                <span className="day-view-event-time">{formatEventTime(ev)}</span>
+                <span className="day-view-event-time">{formatEventTimeDisplay(ev)}</span>
                 <span className="day-view-event-title">{ev.title}</span>
               </button>
             ))

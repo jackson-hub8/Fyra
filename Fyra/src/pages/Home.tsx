@@ -16,13 +16,7 @@ import AddChoreModal from '../components/chores/AddChoreModal';
 import EditChoreModal from '../components/chores/EditChoreModal';
 import './home.css';
 import './calendar/calendar.css';
-
-function formatEventTime(ev: CalendarEvent): string {
-  if (ev.isAllDay) return 'All day';
-  const start = ev.startTime ?? '';
-  const end = ev.endTime ?? '';
-  return `${start}${end ? ` – ${end}` : ''}`;
-}
+import { formatEventTimeDisplay } from '../utils/formatTime12h';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -201,7 +195,7 @@ const Home = () => {
                         style={{ backgroundColor: getEventColor(ev.creatorId) }}
                         onClick={() => setDetailEvent(ev)}
                       >
-                        <span className="week-event-time">{formatEventTime(ev)}</span>
+                        <span className="week-event-time">{formatEventTimeDisplay(ev)}</span>
                         <span className="week-event-title">{ev.title}</span>
                       </button>
                     ))}

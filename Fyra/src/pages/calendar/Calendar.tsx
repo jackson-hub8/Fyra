@@ -10,6 +10,7 @@ import type { CalendarEvent } from '../../context/EventsContext';
 import DayViewModal from '../../components/calendar/DayViewModal';
 import EventDetailModal from '../../components/calendar/EventDetailModal';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
+import { formatTime12h } from '../../utils/formatTime12h';
 import '../home.css';
 import './calendar.css';
 
@@ -164,7 +165,7 @@ const Calendar = () => {
                           style={{ backgroundColor: getEventColor(ev.creatorId) }}
                           onClick={() => handleEventClick(ev)}
                         >
-                          {ev.isAllDay ? ev.title : `${ev.startTime} ${ev.title}`}
+                          {ev.isAllDay ? ev.title : `${formatTime12h(ev.startTime ?? '')} ${ev.title}`}
                         </button>
                       ))}
                       {showMoreLink && (
