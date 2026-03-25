@@ -4,6 +4,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
+import { MIN_PUBLIC_PROFILE_LIST_ITEMS, parsePublicProfileList } from '../lib/publicProfileValidation.js';
 
 const prisma = new PrismaClient();
 
@@ -33,13 +34,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const user = await prisma.users.updateMany({
+    const user = await prisma.users.findUnique({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const profile = await prisma.userProfiles.findUnique({ where: { userEmail: email } });
+    if (!profile?.bio?.trim()) {
+      return res.status(400).json({ error: 'Bio is required before completing setup.' });
+    }
+    if (parsePublicProfileList(profile.topInterests).length < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
+      return res.status(400).json({
+        error: `Top interests must have at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} items.`,
+      });
+    }
+    if (parsePublicProfileList(profile.dailyLife).length < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
+      return res.status(400).json({
+        error: `Daily life must have at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} items.`,
+      });
+    }
+    const petCount = await prisma.petPeeves.count({ where: { userEmail: email } });
+    if (petCount < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
+      return res.status(400).json({
+        error: `Roommate pet peeves must have at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} items.`,
+      });
+    }
+
+    await prisma.users.update({
       where: { email },
       data: { profileSetupComplete: true },
     });
-    if (user.count === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
     return res.status(200).json({ success: true });
   } catch (e) {
     console.error('profileSetupComplete error:', e);

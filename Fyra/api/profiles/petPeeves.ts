@@ -4,6 +4,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
+import { MIN_PUBLIC_PROFILE_LIST_ITEMS } from '../lib/publicProfileValidation.js';
 
 const prisma = new PrismaClient();
 
@@ -74,6 +75,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         where: { id, userEmail: email },
       });
       if (!existing) return res.status(404).json({ error: 'Pet peeve not found' });
+
+      const profileUser = await prisma.users.findUnique({ where: { email } });
+      if (profileUser?.profileSetupComplete) {
+        const count = await prisma.petPeeves.count({ where: { userEmail: email } });
+        if (count <= MIN_PUBLIC_PROFILE_LIST_ITEMS) {
+          return res.status(400).json({
+            error: `You must keep at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} roommate pet peeves on your public profile.`,
+          });
+        }
+      }
+
       await prisma.petPeeves.delete({ where: { id } });
       return res.status(200).json({ success: true });
     } catch (e) {

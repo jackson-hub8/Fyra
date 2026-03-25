@@ -72,8 +72,16 @@ const Login = () => {
           name: userData.name,
           isAdmin: true,
           adminToken: userData.adminToken,
+          isMatched: userData.isMatched,
+          profileSetupComplete: userData.profileSetupComplete,
         });
-        navigate('/admin');
+        if (!userData.profileSetupComplete) {
+          navigate('/profile-setup');
+        } else if (userData.isMatched) {
+          navigate('/matched');
+        } else {
+          navigate('/admin');
+        }
         return;
       }
 

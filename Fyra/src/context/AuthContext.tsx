@@ -18,6 +18,19 @@ export type User = {
 
 type MatchingDeckPreload = { userEmail: string; deck: string[] };
 
+/** Matches ProfileCard + /api/profiles responses; cached so Matching stack can render without per-card loaders. */
+export type ProfileCardCacheEntry = {
+  profile: {
+    userEmail: string;
+    name?: string;
+    bio: string | null;
+    profilePicture: string | null;
+    topInterests: string | null;
+    dailyLife: string | null;
+  };
+  petPeeves: { id: number; petPeeve: string }[];
+};
+
 type AuthContextValue = {
   user: User | null;
   setUser: (u: User | null) => void;
@@ -28,6 +41,8 @@ type AuthContextValue = {
   peekMatchingDeckPreloadForEmail: (email: string) => string[] | null;
   /** Clears cached deck after it has been applied to the UI. */
   consumeMatchingDeckPreloadForEmail: (email: string) => string[] | null;
+  /** Profile + pet peeves prefetched for deck cards (read in ProfileCard when readOnly). */
+  peekProfileCardCache: (email: string) => ProfileCardCacheEntry | null;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -44,6 +59,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const matchingDeckPreloadRef = useRef<MatchingDeckPreload | null>(null);
   const preloadInflightRef = useRef<Map<string, Promise<void>>>(new Map());
+  const profileCardCacheRef = useRef<Map<string, ProfileCardCacheEntry>>(new Map());
+  const profileCardPreloadInflightRef = useRef<Map<string, Promise<void>>>(new Map());
 
   useEffect(() => {
     if (user) {
@@ -58,9 +75,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!u) {
         matchingDeckPreloadRef.current = null;
         preloadInflightRef.current.clear();
+        profileCardCacheRef.current.clear();
+        profileCardPreloadInflightRef.current.clear();
       } else if (prev && u.email.toLowerCase() !== prev.email.toLowerCase()) {
         matchingDeckPreloadRef.current = null;
         preloadInflightRef.current.clear();
+        profileCardCacheRef.current.clear();
+        profileCardPreloadInflightRef.current.clear();
       }
       return u;
     });
@@ -69,7 +90,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = useCallback(() => {
     matchingDeckPreloadRef.current = null;
     preloadInflightRef.current.clear();
+    profileCardCacheRef.current.clear();
+    profileCardPreloadInflightRef.current.clear();
     setUserState(null);
+  }, []);
+
+  const prefetchProfileCardsForEmails = useCallback(async (emails: string[]) => {
+    const unique = [...new Set(emails.map((e) => e.trim().toLowerCase()).filter(Boolean))];
+
+    const prefetchOne = async (normalized: string) => {
+      if (profileCardCacheRef.current.has(normalized)) return;
+      const existing = profileCardPreloadInflightRef.current.get(normalized);
+      if (existing) {
+        await existing;
+        return;
+      }
+      const run = (async () => {
+        try {
+          const [pRes, ppRes] = await Promise.all([
+            fetch(`/api/profiles/profiles?email=${encodeURIComponent(normalized)}`),
+            fetch(`/api/profiles/petPeeves?email=${encodeURIComponent(normalized)}`),
+          ]);
+          if (!pRes.ok || !ppRes.ok) return;
+          const profile = (await pRes.json()) as ProfileCardCacheEntry['profile'];
+          const petPeeves = (await ppRes.json()) as ProfileCardCacheEntry['petPeeves'];
+          profileCardCacheRef.current.set(normalized, { profile, petPeeves: Array.isArray(petPeeves) ? petPeeves : [] });
+        } finally {
+          profileCardPreloadInflightRef.current.delete(normalized);
+        }
+      })();
+      profileCardPreloadInflightRef.current.set(normalized, run);
+      await run;
+    };
+
+    await Promise.all(unique.map((e) => prefetchOne(e)));
   }, []);
 
   const preloadMatchingDeck = useCallback(async (email: string) => {
@@ -89,12 +143,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const data = (await res.json()) as { deck?: string[] };
         const deck = Array.isArray(data.deck) ? data.deck : [];
         matchingDeckPreloadRef.current = { userEmail: normalized, deck };
+        await prefetchProfileCardsForEmails(deck.slice(0, 3));
       } finally {
         preloadInflightRef.current.delete(normalized);
       }
     })();
     preloadInflightRef.current.set(normalized, run);
     await run;
+  }, [prefetchProfileCardsForEmails]);
+
+  const peekProfileCardCache = useCallback((email: string): ProfileCardCacheEntry | null => {
+    const key = email.trim().toLowerCase();
+    const e = profileCardCacheRef.current.get(key);
+    return e ? { profile: { ...e.profile }, petPeeves: [...e.petPeeves] } : null;
   }, []);
 
   const peekMatchingDeckPreloadForEmail = useCallback((email: string): string[] | null => {
@@ -132,6 +193,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         preloadMatchingDeck,
         peekMatchingDeckPreloadForEmail,
         consumeMatchingDeckPreloadForEmail,
+        peekProfileCardCache,
       }}
     >
       {children}

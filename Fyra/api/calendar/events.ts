@@ -105,6 +105,7 @@ export default async function handler(
       }));
       return res.status(200).json({
         events: list,
+        matchId: match.id,
         matchUserEmails: [match.userEmail1, match.userEmail2],
         matchUserNames,
       });
