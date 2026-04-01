@@ -8,7 +8,11 @@ import { useAuth } from '../../context/AuthContext';
 import { PROFILE_QUESTIONS } from '../../config/profileQuestions';
 import type { AllergyCategory, SportCategory } from '../../config/profileQuestions';
 import ProfileCardSetup from '../../components/ProfileCardSetup';
-import { MIN_PUBLIC_PROFILE_LIST_ITEMS } from '../../lib/publicProfileLists';
+import {
+  MAX_PUBLIC_PROFILE_LIST_ITEMS,
+  MIN_PUBLIC_PROFILE_LIST_ITEMS,
+} from '../../lib/publicProfileLists';
+import { OPEN_TEXT_MAX_LENGTH } from '../../lib/textFieldLimits';
 import './login.css';
 
 const TOTAL_QUESTION_PAGES = PROFILE_QUESTIONS.length;
@@ -122,8 +126,11 @@ export default function ProfileSetup() {
   const isBuildProfileValid =
     bio.trim().length > 0 &&
     topInterests.length >= MIN_PUBLIC_PROFILE_LIST_ITEMS &&
+    topInterests.length <= MAX_PUBLIC_PROFILE_LIST_ITEMS &&
     dailyLife.length >= MIN_PUBLIC_PROFILE_LIST_ITEMS &&
-    petPeeves.length >= MIN_PUBLIC_PROFILE_LIST_ITEMS;
+    dailyLife.length <= MAX_PUBLIC_PROFILE_LIST_ITEMS &&
+    petPeeves.length >= MIN_PUBLIC_PROFILE_LIST_ITEMS &&
+    petPeeves.length <= MAX_PUBLIC_PROFILE_LIST_ITEMS;
 
   const updateForm = (id: string, value: string) => {
     setForm((prev) => ({ ...prev, [id]: value }));
@@ -200,12 +207,24 @@ export default function ProfileSetup() {
       setError(`Please add at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} top interests.`);
       return false;
     }
+    if (topInterests.length > MAX_PUBLIC_PROFILE_LIST_ITEMS) {
+      setError(`Please have at most ${MAX_PUBLIC_PROFILE_LIST_ITEMS} top interests.`);
+      return false;
+    }
     if (dailyLife.length < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
       setError(`Please add at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} daily life items.`);
       return false;
     }
+    if (dailyLife.length > MAX_PUBLIC_PROFILE_LIST_ITEMS) {
+      setError(`Please have at most ${MAX_PUBLIC_PROFILE_LIST_ITEMS} daily life items.`);
+      return false;
+    }
     if (petPeeves.length < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
       setError(`Please add at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} roommate pet peeves.`);
+      return false;
+    }
+    if (petPeeves.length > MAX_PUBLIC_PROFILE_LIST_ITEMS) {
+      setError(`Please have at most ${MAX_PUBLIC_PROFILE_LIST_ITEMS} roommate pet peeves.`);
       return false;
     }
     return true;
@@ -239,6 +258,7 @@ export default function ProfileSetup() {
   };
 
   const addTopInterest = () => {
+    if (topInterests.length >= MAX_PUBLIC_PROFILE_LIST_ITEMS) return;
     const v = topInterestsInput.trim();
     if (!v || topInterests.includes(v)) return;
     setTopInterests((prev) => [...prev, v]);
@@ -250,6 +270,7 @@ export default function ProfileSetup() {
   };
 
   const addDailyLifeItem = () => {
+    if (dailyLife.length >= MAX_PUBLIC_PROFILE_LIST_ITEMS) return;
     const v = dailyLifeInput.trim();
     if (!v || dailyLife.includes(v)) return;
     setDailyLife((prev) => [...prev, v]);
@@ -261,6 +282,7 @@ export default function ProfileSetup() {
   };
 
   const addPetPeeve = () => {
+    if (petPeeves.length >= MAX_PUBLIC_PROFILE_LIST_ITEMS) return;
     const v = petPeeveInput.trim();
     if (!v || petPeeves.includes(v)) return;
     setPetPeeves((prev) => [...prev, v]);
@@ -407,6 +429,7 @@ export default function ProfileSetup() {
                         type="text"
                         className="password-input"
                         placeholder="Specify genre..."
+                        maxLength={OPEN_TEXT_MAX_LENGTH}
                         value={
                           (form.musicPreference ?? '').startsWith('Other:')
                             ? (form.musicPreference ?? '').slice(6).trim()
@@ -445,6 +468,7 @@ export default function ProfileSetup() {
                         value={adaAccommodationsDetails}
                         onChange={(e) => setAdaAccommodationsDetails(e.target.value)}
                         rows={3}
+                        maxLength={OPEN_TEXT_MAX_LENGTH}
                         style={{ resize: 'vertical', marginTop: 8, display: 'block' }}
                       />
                     )}
@@ -456,6 +480,7 @@ export default function ProfileSetup() {
                     className="password-input"
                     placeholder={q.placeholder}
                     value={form[q.id] ?? ''}
+                    maxLength={OPEN_TEXT_MAX_LENGTH}
                     onChange={(e) => updateForm(q.id, e.target.value)}
                   />
                 )}
@@ -466,6 +491,7 @@ export default function ProfileSetup() {
                     value={form[q.id] ?? ''}
                     onChange={(e) => updateForm(q.id, e.target.value)}
                     rows={3}
+                    maxLength={OPEN_TEXT_MAX_LENGTH}
                     style={{ resize: 'vertical' }}
                   />
                 )}
@@ -493,6 +519,7 @@ export default function ProfileSetup() {
                           className="password-input"
                           placeholder={q.placeholder}
                           value={tagInput}
+                          maxLength={OPEN_TEXT_MAX_LENGTH}
                           onChange={(e) =>
                             setTagInputByQuestionId((prev) => ({ ...prev, [q.id]: e.target.value }))
                           }
@@ -566,6 +593,7 @@ export default function ProfileSetup() {
                           className="password-input"
                           placeholder="Describe your allergy..."
                           value={otherText}
+                          maxLength={OPEN_TEXT_MAX_LENGTH}
                           onChange={(e) => setOther(e.target.value)}
                           style={{ marginLeft: 24, maxWidth: 320 }}
                         />
