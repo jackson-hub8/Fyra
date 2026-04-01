@@ -6,7 +6,11 @@ import {
   MAX_PROFILE_PHOTO_BYTES,
   profilePhotoContentTypeForUpload,
 } from '../lib/profilePhotoUpload';
-import { MIN_PUBLIC_PROFILE_LIST_ITEMS } from '../lib/publicProfileLists';
+import {
+  MAX_PUBLIC_PROFILE_LIST_ITEMS,
+  MIN_PUBLIC_PROFILE_LIST_ITEMS,
+} from '../lib/publicProfileLists';
+import { OPEN_TEXT_MAX_LENGTH, PROFILE_BIO_MAX_LENGTH } from '../lib/textFieldLimits';
 import './ProfileCard.css';
 
 type Props = {
@@ -166,13 +170,17 @@ export default function ProfileCardSetup({
               onChange={(e) => onBioChange(e.target.value)}
               placeholder="A short intro..."
               rows={5}
+              maxLength={PROFILE_BIO_MAX_LENGTH}
             />
           </div>
         </div>
         <div className="profile-details">
           <div className="profile-edit-form">
             <label>Top interests</label>
-            <p className="profile-field-hint">At least {MIN_PUBLIC_PROFILE_LIST_ITEMS} items required.</p>
+            <p className="profile-field-hint">
+              {MIN_PUBLIC_PROFILE_LIST_ITEMS}–{MAX_PUBLIC_PROFILE_LIST_ITEMS} items; max{' '}
+              {OPEN_TEXT_MAX_LENGTH} characters each.
+            </p>
             <div className="profile-petpeeve-list">
               {topInterests.map((item, i) => (
                 <span key={i} className="profile-petpeeve-tag">
@@ -190,15 +198,24 @@ export default function ProfileCardSetup({
                 onChange={(e) => onTopInterestsInputChange(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), onAddTopInterest())}
                 placeholder="Add one..."
+                maxLength={OPEN_TEXT_MAX_LENGTH}
               />
-              <button type="button" className="btn-add-pp" onClick={onAddTopInterest}>
+              <button
+                type="button"
+                className="btn-add-pp"
+                onClick={onAddTopInterest}
+                disabled={topInterests.length >= MAX_PUBLIC_PROFILE_LIST_ITEMS}
+              >
                 Add
               </button>
             </div>
           </div>
           <div className="profile-edit-form">
             <label>Daily life</label>
-            <p className="profile-field-hint">At least {MIN_PUBLIC_PROFILE_LIST_ITEMS} items required.</p>
+            <p className="profile-field-hint">
+              {MIN_PUBLIC_PROFILE_LIST_ITEMS}–{MAX_PUBLIC_PROFILE_LIST_ITEMS} items; max{' '}
+              {OPEN_TEXT_MAX_LENGTH} characters each.
+            </p>
             <div className="profile-petpeeve-list">
               {dailyLife.map((item, i) => (
                 <span key={i} className="profile-petpeeve-tag">
@@ -216,15 +233,24 @@ export default function ProfileCardSetup({
                 onChange={(e) => onDailyLifeInputChange(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), onAddDailyLifeItem())}
                 placeholder="Add one..."
+                maxLength={OPEN_TEXT_MAX_LENGTH}
               />
-              <button type="button" className="btn-add-pp" onClick={onAddDailyLifeItem}>
+              <button
+                type="button"
+                className="btn-add-pp"
+                onClick={onAddDailyLifeItem}
+                disabled={dailyLife.length >= MAX_PUBLIC_PROFILE_LIST_ITEMS}
+              >
                 Add
               </button>
             </div>
           </div>
           <div className="profile-edit-form">
             <label>Roommate pet peeves</label>
-            <p className="profile-field-hint">At least {MIN_PUBLIC_PROFILE_LIST_ITEMS} items required.</p>
+            <p className="profile-field-hint">
+              {MIN_PUBLIC_PROFILE_LIST_ITEMS}–{MAX_PUBLIC_PROFILE_LIST_ITEMS} items; max{' '}
+              {OPEN_TEXT_MAX_LENGTH} characters each.
+            </p>
             <div className="profile-petpeeve-list">
               {petPeeves.map((pp, i) => (
                 <span key={i} className="profile-petpeeve-tag">
@@ -242,8 +268,14 @@ export default function ProfileCardSetup({
                 onChange={(e) => onPetPeeveInputChange(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), onAddPetPeeve())}
                 placeholder="Add one..."
+                maxLength={OPEN_TEXT_MAX_LENGTH}
               />
-              <button type="button" className="btn-add-pp" onClick={onAddPetPeeve}>
+              <button
+                type="button"
+                className="btn-add-pp"
+                onClick={onAddPetPeeve}
+                disabled={petPeeves.length >= MAX_PUBLIC_PROFILE_LIST_ITEMS}
+              >
                 Add
               </button>
             </div>

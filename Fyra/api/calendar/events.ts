@@ -3,6 +3,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
+import { OPEN_TEXT_MAX_LENGTH } from '../lib/textFieldLimits.js';
 
 const prisma = new PrismaClient();
 
@@ -134,6 +135,17 @@ export default async function handler(
       if (!title) {
         return res.status(400).json({ error: 'Title is required' });
       }
+      if (title.length > OPEN_TEXT_MAX_LENGTH) {
+        return res.status(400).json({
+          error: `Title must be at most ${OPEN_TEXT_MAX_LENGTH} characters.`,
+        });
+      }
+      const descriptionTrim = body?.description?.trim() || '';
+      if (descriptionTrim.length > OPEN_TEXT_MAX_LENGTH) {
+        return res.status(400).json({
+          error: `Description must be at most ${OPEN_TEXT_MAX_LENGTH} characters.`,
+        });
+      }
       const isAllDay = Boolean(body?.isAllDay);
       const startDate = String(body?.startDate ?? '').slice(0, 10);
       const endDate = String(body?.endDate ?? '').slice(0, 10);
@@ -145,7 +157,7 @@ export default async function handler(
           matchId: match.id,
           creatorEmail: email,
           title,
-          description: body?.description?.trim() || null,
+          description: descriptionTrim || null,
           startDate,
           endDate,
           startTime: isAllDay ? null : (body?.startTime ?? null),
@@ -203,9 +215,27 @@ export default async function handler(
         endTime?: string | null;
         isAllDay?: boolean;
       } = {};
-      if (body?.title !== undefined) data.title = body.title.trim();
-      if (body?.description !== undefined)
-        data.description = body.description?.trim() || null;
+      if (body?.title !== undefined) {
+        const t = body.title.trim();
+        if (!t) {
+          return res.status(400).json({ error: 'Title cannot be empty' });
+        }
+        if (t.length > OPEN_TEXT_MAX_LENGTH) {
+          return res.status(400).json({
+            error: `Title must be at most ${OPEN_TEXT_MAX_LENGTH} characters.`,
+          });
+        }
+        data.title = t;
+      }
+      if (body?.description !== undefined) {
+        const d = body.description?.trim() || '';
+        if (d.length > OPEN_TEXT_MAX_LENGTH) {
+          return res.status(400).json({
+            error: `Description must be at most ${OPEN_TEXT_MAX_LENGTH} characters.`,
+          });
+        }
+        data.description = d || null;
+      }
       if (body?.startDate !== undefined) data.startDate = String(body.startDate).slice(0, 10);
       if (body?.endDate !== undefined) data.endDate = String(body.endDate).slice(0, 10);
       if (body?.startTime !== undefined) data.startTime = body.startTime;

@@ -62,6 +62,7 @@ const Calendar = () => {
   };
 
   const monthName = monthNames[currentDate.getMonth()];
+  const year = currentDate.getFullYear();
   const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
 
@@ -123,7 +124,7 @@ const Calendar = () => {
         <div className="calendar-header-controls">
           <div className="month-navigation">
             <button className="month-arrow" onClick={handlePreviousMonth}>←</button>
-            <h2 className="month-name">{monthName}</h2>
+            <h2 className="month-name">{monthName} {year}</h2>
             <button className="month-arrow" onClick={handleNextMonth}>→</button>
           </div>
           <button className="add-event-button" onClick={handleAddEvent}>+</button>

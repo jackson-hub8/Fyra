@@ -2,6 +2,7 @@
 /// Modal to create a new chore with title and due date (any day).
 
 import { useState } from 'react';
+import { OPEN_TEXT_MAX_LENGTH } from '../../lib/textFieldLimits';
 
 function toYMD(d: Date): string {
   const y = d.getFullYear();
@@ -61,6 +62,7 @@ export default function AddChoreModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Take out trash"
+              maxLength={OPEN_TEXT_MAX_LENGTH}
               autoFocus
             />
           </div>

@@ -8,6 +8,7 @@ import { useEvents } from '../../context/EventsContext';
 import '../home.css';
 import './createEvent.css';
 import TimePicker from '../../components/calendar/TimePicker';
+import { OPEN_TEXT_MAX_LENGTH } from '../../lib/textFieldLimits';
 
 const toYMD = (d: Date) => {
   const y = d.getFullYear();
@@ -107,6 +108,7 @@ const CreateEvent = () => {
               onChange={(e) => setTitle(e.target.value)}
               onBlur={() => setTouched(true)}
               placeholder="Event title"
+              maxLength={OPEN_TEXT_MAX_LENGTH}
               className={touched && !titleValid ? 'invalid' : ''}
             />
             {touched && !titleValid && (
@@ -122,6 +124,7 @@ const CreateEvent = () => {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add details..."
               rows={3}
+              maxLength={OPEN_TEXT_MAX_LENGTH}
             />
           </div>
 

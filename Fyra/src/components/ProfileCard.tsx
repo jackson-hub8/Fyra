@@ -9,7 +9,11 @@ import {
   MAX_PROFILE_PHOTO_BYTES,
   profilePhotoContentTypeForUpload,
 } from '../lib/profilePhotoUpload';
-import { MIN_PUBLIC_PROFILE_LIST_ITEMS } from '../lib/publicProfileLists';
+import {
+  MAX_PUBLIC_PROFILE_LIST_ITEMS,
+  MIN_PUBLIC_PROFILE_LIST_ITEMS,
+} from '../lib/publicProfileLists';
+import { OPEN_TEXT_MAX_LENGTH, PROFILE_BIO_MAX_LENGTH } from '../lib/textFieldLimits';
 import './ProfileCard.css';
 
 type ProfileData = {
@@ -99,6 +103,7 @@ export default function ProfileCard({ email, readOnly = false }: ProfileCardProp
   }, [email, readOnly, fetchProfile, peekProfileCardCache]);
 
   const addTopInterest = () => {
+    if (editInterests.length >= MAX_PUBLIC_PROFILE_LIST_ITEMS) return;
     const v = topInterestsInput.trim();
     if (!v || editInterests.includes(v)) return;
     setEditInterests((prev) => [...prev, v]);
@@ -110,6 +115,7 @@ export default function ProfileCard({ email, readOnly = false }: ProfileCardProp
   };
 
   const addDailyLifeItem = () => {
+    if (editDailyLife.length >= MAX_PUBLIC_PROFILE_LIST_ITEMS) return;
     const v = dailyLifeInput.trim();
     if (!v || editDailyLife.includes(v)) return;
     setEditDailyLife((prev) => [...prev, v]);
@@ -121,6 +127,7 @@ export default function ProfileCard({ email, readOnly = false }: ProfileCardProp
   };
 
   const addPetPeeve = () => {
+    if (editPetPeeves.length >= MAX_PUBLIC_PROFILE_LIST_ITEMS) return;
     const v = petPeeveInput.trim();
     if (!v || editPetPeeves.includes(v)) return;
     setEditPetPeeves((prev) => [...prev, v]);
@@ -138,12 +145,24 @@ export default function ProfileCard({ email, readOnly = false }: ProfileCardProp
       setError(`Top interests must have at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} items.`);
       return;
     }
+    if (editInterests.length > MAX_PUBLIC_PROFILE_LIST_ITEMS) {
+      setError(`Top interests must have at most ${MAX_PUBLIC_PROFILE_LIST_ITEMS} items.`);
+      return;
+    }
     if (editDailyLife.length < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
       setError(`Daily life must have at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} items.`);
       return;
     }
+    if (editDailyLife.length > MAX_PUBLIC_PROFILE_LIST_ITEMS) {
+      setError(`Daily life must have at most ${MAX_PUBLIC_PROFILE_LIST_ITEMS} items.`);
+      return;
+    }
     if (editPetPeeves.length < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
       setError(`Roommate pet peeves must have at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} items.`);
+      return;
+    }
+    if (editPetPeeves.length > MAX_PUBLIC_PROFILE_LIST_ITEMS) {
+      setError(`Roommate pet peeves must have at most ${MAX_PUBLIC_PROFILE_LIST_ITEMS} items.`);
       return;
     }
     setSaving(true);
@@ -322,6 +341,7 @@ export default function ProfileCard({ email, readOnly = false }: ProfileCardProp
                   onChange={(e) => setEditBio(e.target.value)}
                   placeholder="A short intro..."
                   rows={5}
+                  maxLength={PROFILE_BIO_MAX_LENGTH}
                 />
               </div>
             ) : (
@@ -335,7 +355,10 @@ export default function ProfileCard({ email, readOnly = false }: ProfileCardProp
               <>
                 <div className="profile-edit-form">
                   <label>Top interests</label>
-                  <p className="profile-field-hint">At least {MIN_PUBLIC_PROFILE_LIST_ITEMS} items required.</p>
+                  <p className="profile-field-hint">
+                    {MIN_PUBLIC_PROFILE_LIST_ITEMS}–{MAX_PUBLIC_PROFILE_LIST_ITEMS} items; max{' '}
+                    {OPEN_TEXT_MAX_LENGTH} characters each.
+                  </p>
                   <div className="profile-petpeeve-list">
                     {editInterests.map((item, i) => (
                       <span key={i} className="profile-petpeeve-tag">
@@ -353,15 +376,24 @@ export default function ProfileCard({ email, readOnly = false }: ProfileCardProp
                       onChange={(e) => setTopInterestsInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTopInterest())}
                       placeholder="Add one..."
+                      maxLength={OPEN_TEXT_MAX_LENGTH}
                     />
-                    <button type="button" className="btn-add-pp" onClick={addTopInterest}>
+                    <button
+                      type="button"
+                      className="btn-add-pp"
+                      onClick={addTopInterest}
+                      disabled={editInterests.length >= MAX_PUBLIC_PROFILE_LIST_ITEMS}
+                    >
                       Add
                     </button>
                   </div>
                 </div>
                 <div className="profile-edit-form">
                   <label>Daily life</label>
-                  <p className="profile-field-hint">At least {MIN_PUBLIC_PROFILE_LIST_ITEMS} items required.</p>
+                  <p className="profile-field-hint">
+                    {MIN_PUBLIC_PROFILE_LIST_ITEMS}–{MAX_PUBLIC_PROFILE_LIST_ITEMS} items; max{' '}
+                    {OPEN_TEXT_MAX_LENGTH} characters each.
+                  </p>
                   <div className="profile-petpeeve-list">
                     {editDailyLife.map((item, i) => (
                       <span key={i} className="profile-petpeeve-tag">
@@ -379,15 +411,24 @@ export default function ProfileCard({ email, readOnly = false }: ProfileCardProp
                       onChange={(e) => setDailyLifeInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addDailyLifeItem())}
                       placeholder="Add one..."
+                      maxLength={OPEN_TEXT_MAX_LENGTH}
                     />
-                    <button type="button" className="btn-add-pp" onClick={addDailyLifeItem}>
+                    <button
+                      type="button"
+                      className="btn-add-pp"
+                      onClick={addDailyLifeItem}
+                      disabled={editDailyLife.length >= MAX_PUBLIC_PROFILE_LIST_ITEMS}
+                    >
                       Add
                     </button>
                   </div>
                 </div>
                 <div className="profile-edit-form">
                   <label>Roommate pet peeves</label>
-                  <p className="profile-field-hint">At least {MIN_PUBLIC_PROFILE_LIST_ITEMS} items required.</p>
+                  <p className="profile-field-hint">
+                    {MIN_PUBLIC_PROFILE_LIST_ITEMS}–{MAX_PUBLIC_PROFILE_LIST_ITEMS} items; max{' '}
+                    {OPEN_TEXT_MAX_LENGTH} characters each.
+                  </p>
                   <div className="profile-petpeeve-list">
                     {editPetPeeves.map((pp, i) => (
                       <span key={i} className="profile-petpeeve-tag">
@@ -405,8 +446,14 @@ export default function ProfileCard({ email, readOnly = false }: ProfileCardProp
                       onChange={(e) => setPetPeeveInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addPetPeeve())}
                       placeholder="Add one..."
+                      maxLength={OPEN_TEXT_MAX_LENGTH}
                     />
-                    <button type="button" className="btn-add-pp" onClick={addPetPeeve}>
+                    <button
+                      type="button"
+                      className="btn-add-pp"
+                      onClick={addPetPeeve}
+                      disabled={editPetPeeves.length >= MAX_PUBLIC_PROFILE_LIST_ITEMS}
+                    >
                       Add
                     </button>
                   </div>

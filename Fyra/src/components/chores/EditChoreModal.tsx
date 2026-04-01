@@ -2,6 +2,7 @@
 /// Modal to edit chore title and due date (any day).
 
 import { useState, useEffect } from 'react';
+import { OPEN_TEXT_MAX_LENGTH } from '../../lib/textFieldLimits';
 import type { Chore } from '../../context/ChoresContext';
 
 type EditChoreModalProps = {
@@ -62,6 +63,7 @@ export default function EditChoreModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Take out trash"
+              maxLength={OPEN_TEXT_MAX_LENGTH}
               autoFocus
             />
           </div>

@@ -3,7 +3,13 @@
 /// API for user profile (display): bio, photo, topInterests, dailyLife. GET by user, PATCH update.
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
-import { MIN_PUBLIC_PROFILE_LIST_ITEMS, parsePublicProfileList } from '../lib/publicProfileValidation.js';
+import { OPEN_TEXT_MAX_LENGTH, PROFILE_BIO_MAX_LENGTH } from '../lib/textFieldLimits.js';
+import {
+  MAX_PUBLIC_PROFILE_LIST_ITEMS,
+  MIN_PUBLIC_PROFILE_LIST_ITEMS,
+  parsePublicProfileList,
+  publicProfileListFieldError,
+} from '../lib/publicProfileValidation.js';
 
 const prisma = new PrismaClient();
 
@@ -59,7 +65,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const body = req.body as { bio?: string; profilePicture?: string; topInterests?: string; dailyLife?: string; major?: string };
       const data: { bio?: string; profilePicture?: string; topInterests?: string; dailyLife?: string; major?: string } = {};
-      if (body.bio !== undefined) data.bio = body.bio;
+      if (body.bio !== undefined) {
+        if (body.bio.length > PROFILE_BIO_MAX_LENGTH) {
+          return res.status(400).json({
+            error: `Bio must be at most ${PROFILE_BIO_MAX_LENGTH} characters.`,
+          });
+        }
+        data.bio = body.bio;
+      }
       if (body.profilePicture !== undefined) data.profilePicture = body.profilePicture;
       if (body.topInterests !== undefined) data.topInterests = body.topInterests;
       if (body.dailyLife !== undefined) data.dailyLife = body.dailyLife;
@@ -71,16 +84,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const topItems = parsePublicProfileList(mergedTop);
       const dailyItems = parsePublicProfileList(mergedDaily);
-      if (topItems.length < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
-        return res.status(400).json({
-          error: `Top interests must have at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} items.`,
-        });
-      }
-      if (dailyItems.length < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
-        return res.status(400).json({
-          error: `Daily life must have at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} items.`,
-        });
-      }
+      const topErr = publicProfileListFieldError(topItems, 'Top interests');
+      if (topErr) return res.status(400).json({ error: topErr });
+      const dailyErr = publicProfileListFieldError(dailyItems, 'Daily life');
+      if (dailyErr) return res.status(400).json({ error: dailyErr });
 
       if (user.profileSetupComplete) {
         const petCount = await prisma.petPeeves.count({ where: { userEmail: email } });
@@ -88,6 +95,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return res.status(400).json({
             error: `Roommate pet peeves must have at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} items.`,
           });
+        }
+        if (petCount > MAX_PUBLIC_PROFILE_LIST_ITEMS) {
+          return res.status(400).json({
+            error: `Roommate pet peeves must have at most ${MAX_PUBLIC_PROFILE_LIST_ITEMS} items.`,
+          });
+        }
+        const peeves = await prisma.petPeeves.findMany({
+          where: { userEmail: email },
+          select: { petPeeve: true },
+        });
+        for (const row of peeves) {
+          if (row.petPeeve.length > OPEN_TEXT_MAX_LENGTH) {
+            return res.status(400).json({
+              error: `Each roommate pet peeve must be at most ${OPEN_TEXT_MAX_LENGTH} characters.`,
+            });
+          }
         }
       }
 

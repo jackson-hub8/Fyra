@@ -3,6 +3,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
+import { OPEN_TEXT_MAX_LENGTH } from '../lib/textFieldLimits.js';
 
 const prisma = new PrismaClient();
 
@@ -100,6 +101,11 @@ export default async function handler(
       if (!title) {
         return res.status(400).json({ error: 'Title is required' });
       }
+      if (title.length > OPEN_TEXT_MAX_LENGTH) {
+        return res.status(400).json({
+          error: `Title must be at most ${OPEN_TEXT_MAX_LENGTH} characters.`,
+        });
+      }
       const dueDate = String(body?.dueDate ?? '').slice(0, 10);
       if (!dueDate) {
         return res.status(400).json({ error: 'dueDate is required (YYYY-MM-DD)' });
@@ -138,7 +144,18 @@ export default async function handler(
       }
       const body = req.body as Partial<{ title: string; dueDate: string; completed: boolean }>;
       const data: { title?: string; dueDate?: string; completed?: boolean } = {};
-      if (body?.title !== undefined) data.title = body.title.trim();
+      if (body?.title !== undefined) {
+        const t = body.title.trim();
+        if (!t) {
+          return res.status(400).json({ error: 'Title cannot be empty' });
+        }
+        if (t.length > OPEN_TEXT_MAX_LENGTH) {
+          return res.status(400).json({
+            error: `Title must be at most ${OPEN_TEXT_MAX_LENGTH} characters.`,
+          });
+        }
+        data.title = t;
+      }
       if (body?.dueDate !== undefined) data.dueDate = String(body.dueDate).slice(0, 10);
       if (body?.completed !== undefined) data.completed = body.completed;
 

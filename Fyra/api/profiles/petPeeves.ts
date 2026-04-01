@@ -4,7 +4,8 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
-import { MIN_PUBLIC_PROFILE_LIST_ITEMS } from '../lib/publicProfileValidation.js';
+import { OPEN_TEXT_MAX_LENGTH } from '../lib/textFieldLimits.js';
+import { MAX_PUBLIC_PROFILE_LIST_ITEMS, MIN_PUBLIC_PROFILE_LIST_ITEMS } from '../lib/publicProfileValidation.js';
 
 const prisma = new PrismaClient();
 
@@ -50,8 +51,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!email || !petPeeve) {
         return res.status(400).json({ error: 'Email and petPeeve are required' });
       }
+      if (petPeeve.length > OPEN_TEXT_MAX_LENGTH) {
+        return res.status(400).json({
+          error: `Pet peeve text must be at most ${OPEN_TEXT_MAX_LENGTH} characters.`,
+        });
+      }
       const user = await prisma.users.findUnique({ where: { email } });
       if (!user) return res.status(404).json({ error: 'User not found' });
+
+      const existingCount = await prisma.petPeeves.count({ where: { userEmail: email } });
+      if (existingCount >= MAX_PUBLIC_PROFILE_LIST_ITEMS) {
+        return res.status(400).json({
+          error: `You can add at most ${MAX_PUBLIC_PROFILE_LIST_ITEMS} roommate pet peeves.`,
+        });
+      }
 
       const severity = (body.severity?.trim() || 'medium') as string;
       const created = await prisma.petPeeves.create({

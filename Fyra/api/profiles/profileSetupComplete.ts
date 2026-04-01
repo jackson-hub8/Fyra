@@ -4,7 +4,8 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
-import { MIN_PUBLIC_PROFILE_LIST_ITEMS, parsePublicProfileList } from '../lib/publicProfileValidation.js';
+import { PROFILE_BIO_MAX_LENGTH } from '../lib/textFieldLimits.js';
+import { parsePublicProfileList, publicProfileListFieldError } from '../lib/publicProfileValidation.js';
 
 const prisma = new PrismaClient();
 
@@ -43,22 +44,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!profile?.bio?.trim()) {
       return res.status(400).json({ error: 'Bio is required before completing setup.' });
     }
-    if (parsePublicProfileList(profile.topInterests).length < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
+    if (profile.bio.length > PROFILE_BIO_MAX_LENGTH) {
       return res.status(400).json({
-        error: `Top interests must have at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} items.`,
+        error: `Bio must be at most ${PROFILE_BIO_MAX_LENGTH} characters.`,
       });
     }
-    if (parsePublicProfileList(profile.dailyLife).length < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
-      return res.status(400).json({
-        error: `Daily life must have at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} items.`,
-      });
-    }
-    const petCount = await prisma.petPeeves.count({ where: { userEmail: email } });
-    if (petCount < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
-      return res.status(400).json({
-        error: `Roommate pet peeves must have at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} items.`,
-      });
-    }
+    const topErr = publicProfileListFieldError(
+      parsePublicProfileList(profile.topInterests),
+      'Top interests',
+    );
+    if (topErr) return res.status(400).json({ error: topErr });
+    const dailyErr = publicProfileListFieldError(
+      parsePublicProfileList(profile.dailyLife),
+      'Daily life',
+    );
+    if (dailyErr) return res.status(400).json({ error: dailyErr });
+    const petRows = await prisma.petPeeves.findMany({
+      where: { userEmail: email },
+      select: { petPeeve: true },
+      orderBy: { id: 'asc' },
+    });
+    const petErr = publicProfileListFieldError(
+      petRows.map((r) => r.petPeeve),
+      'Roommate pet peeves',
+    );
+    if (petErr) return res.status(400).json({ error: petErr });
 
     await prisma.users.update({
       where: { email },
