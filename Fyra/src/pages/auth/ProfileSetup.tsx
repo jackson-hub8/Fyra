@@ -1,6 +1,6 @@
 /// file: ProfileSetup.tsx
 /// Jackson Hurley, Kaitlyn Maes, Cam Horine
-/// Profile setup: 24 private questions (multi-page) + build profile (bio, interests, daily life, pet peeves).
+/// Profile setup: 25 private questions (multi-page) + build profile (bio, interests, daily life, pet peeves).
 
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';

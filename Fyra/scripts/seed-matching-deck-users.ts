@@ -18,6 +18,8 @@ const SWIPE_EMAILS = Array.from({ length: 20 }, (_, i) => `swipe${i + 1}@transy.
 const PLACEHOLDER_PHOTO = (n: number) =>
   `https://picsum.photos/seed/fyra-swipe-${n}/400/400`;
 
+const STANDINGS = ['Freshman', 'Sophomore', 'Junior', 'Senior'] as const;
+
 type QData = Omit<Prisma.PrivateQuestionnaireUncheckedCreateInput, 'userEmail' | 'id'>;
 
 /** Twenty distinct questionnaires so pairwise scores vary (not all identical). */
@@ -656,6 +658,7 @@ async function main() {
   const test2Q: QData = {
     ...USER_QUESTIONNAIRES[0],
     animalAllergies: '',
+    classStanding: 'Senior',
   };
   await prisma.privateQuestionnaire.upsert({
     where: { userEmail: 'test2@transy.edu' },
@@ -694,6 +697,7 @@ async function main() {
       data: {
         userEmail: email,
         ...qData,
+        classStanding: STANDINGS[i % 4],
       },
     });
 

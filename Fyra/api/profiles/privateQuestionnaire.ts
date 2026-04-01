@@ -21,6 +21,7 @@ type QuestionnairePayload = {
   email: string;
   gender?: string;
   sexAssignedAtBirth?: string;
+  classStanding?: string;
   adaAccommodations?: string;
   animalAllergies?: string;
   varsitySport?: string;
@@ -83,6 +84,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const data = {
         gender: body.gender ?? undefined,
         sexAssignedAtBirth: body.sexAssignedAtBirth ?? undefined,
+        classStanding: body.classStanding ?? undefined,
         adaAccommodations: body.adaAccommodations ?? undefined,
         animalAllergies: body.animalAllergies ?? undefined,
         varsitySport: body.varsitySport ?? undefined,
