@@ -9,11 +9,7 @@ import {
   PRIVATE_QUESTIONNAIRE_FIELD_ORDER,
   formatPrivateQuestionnaireAnswer,
   getPrivateQuestionnaireAdminLabel,
-  CLASS_STANDING_OPTIONS,
 } from '../../config/profileQuestions';
-import StudentSearchResultsTable from '../../components/StudentSearchResultsTable';
-import type { StudentSearchRow } from '../../components/StudentSearchResultsTable';
-import '../unmatched/unmatched-search.css';
 
 type UnmatchedUser = { email: string; name: string };
 type PossibleRow = {
@@ -91,13 +87,6 @@ export default function AdminMatching() {
   const [pairModalLoading, setPairModalLoading] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [manualPickA, setManualPickA] = useState<{ email: string; name: string } | null>(null);
-  const [manualPickB, setManualPickB] = useState<{ email: string; name: string } | null>(null);
-  const [manualSearchFirst, setManualSearchFirst] = useState('');
-  const [manualSearchLast, setManualSearchLast] = useState('');
-  const [manualSearchStanding, setManualSearchStanding] = useState('');
-  const [manualSearchResults, setManualSearchResults] = useState<StudentSearchRow[]>([]);
-  const [manualSearchLoading, setManualSearchLoading] = useState(false);
   const [mutualRequests, setMutualRequests] = useState<MutualRequestPair[]>([]);
   const [unmatchLoadingId, setUnmatchLoadingId] = useState<number | null>(null);
 
@@ -256,61 +245,6 @@ export default function AdminMatching() {
     }
   };
 
-  const runManualStudentSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setManualSearchLoading(true);
-    try {
-      const res = await fetch('/api/admin/student-search', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: manualSearchFirst,
-          lastName: manualSearchLast,
-          standing: manualSearchStanding.trim() || undefined,
-        }),
-      });
-      const data = (await res.json()) as { results?: StudentSearchRow[]; error?: string };
-      if (!res.ok) throw new Error(data.error ?? 'Search failed');
-      setManualSearchResults(Array.isArray(data.results) ? data.results : []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Search failed');
-    } finally {
-      setManualSearchLoading(false);
-    }
-  };
-
-  const manualMatch = async () => {
-    const a = manualPickA?.email.trim().toLowerCase();
-    const b = manualPickB?.email.trim().toLowerCase();
-    if (!a || !b) {
-      setError('Select roommate A and roommate B from the search results.');
-      return;
-    }
-    if (a === b) {
-      setError('Choose two different students.');
-      return;
-    }
-    setError('');
-    try {
-      const res = await fetch('/api/admin/manual-match', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userEmailA: a, userEmailB: b }),
-      });
-      const data = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(data.error ?? 'Manual match failed');
-      setManualPickA(null);
-      setManualPickB(null);
-      setManualSearchResults([]);
-      await loadUnmatched();
-      await loadMatched();
-      await loadMutualRequests();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error');
-    }
-  };
-
   const matchPairFromMutualRequest = async (p: MutualRequestPair) => {
     setError('');
     try {
@@ -387,9 +321,7 @@ export default function AdminMatching() {
 
       <main className="profile-main admin-matching-main">
         {error && <div className="error-message">{error}</div>}
-        {loading && !pairModalLoading && !manualSearchLoading && (
-          <p className="profile-loading">Loading…</p>
-        )}
+        {loading && !pairModalLoading && <p className="profile-loading">Loading…</p>}
 
         {tab === 'unmatched' && (
           <div className="admin-matching-split">
@@ -536,100 +468,6 @@ export default function AdminMatching() {
                 </li>
               ))}
             </ul>
-
-            <div className="admin-manual-block">
-              <h3 className="form-title" style={{ fontSize: '1.1rem', marginTop: 0 }}>
-                Manual match
-              </h3>
-              <p style={{ fontSize: 14, color: '#555', marginBottom: 8 }}>
-                Search by name, then pick roommate A and roommate B from the top results.
-              </p>
-              <div className="unmatched-search-wrap" style={{ maxWidth: 560, marginBottom: 16 }}>
-                <form className="unmatched-search-form" onSubmit={runManualStudentSearch}>
-                  <input
-                    className="password-input"
-                    type="text"
-                    placeholder="First Name"
-                    value={manualSearchFirst}
-                    onChange={(e) => setManualSearchFirst(e.target.value)}
-                    aria-label="First name"
-                  />
-                  <input
-                    className="password-input"
-                    type="text"
-                    placeholder="Last Name"
-                    value={manualSearchLast}
-                    onChange={(e) => setManualSearchLast(e.target.value)}
-                    aria-label="Last name"
-                  />
-                  <select
-                    className="student-search-select"
-                    value={manualSearchStanding}
-                    onChange={(e) => setManualSearchStanding(e.target.value)}
-                    aria-label="Class year filter"
-                  >
-                    <option value="">Year (optional)</option>
-                    {CLASS_STANDING_OPTIONS.map((opt) => (
-                      <option key={opt} value={opt}>
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                  <button type="submit" className="submit-button" disabled={manualSearchLoading}>
-                    {manualSearchLoading ? 'Searching…' : 'Submit'}
-                  </button>
-                </form>
-              </div>
-              {(manualPickA || manualPickB) && (
-                <div style={{ fontSize: 14, marginBottom: 12, lineHeight: 1.5 }}>
-                  <div>
-                    <strong>Roommate A:</strong>{' '}
-                    {manualPickA ? (
-                      <>
-                        {manualPickA.name}{' '}
-                        <span style={{ color: '#666' }}>({manualPickA.email})</span>{' '}
-                        <button type="button" className="back-button" onClick={() => setManualPickA(null)}>
-                          Clear
-                        </button>
-                      </>
-                    ) : (
-                      <span style={{ color: '#666' }}>Not selected</span>
-                    )}
-                  </div>
-                  <div style={{ marginTop: 6 }}>
-                    <strong>Roommate B:</strong>{' '}
-                    {manualPickB ? (
-                      <>
-                        {manualPickB.name}{' '}
-                        <span style={{ color: '#666' }}>({manualPickB.email})</span>{' '}
-                        <button type="button" className="back-button" onClick={() => setManualPickB(null)}>
-                          Clear
-                        </button>
-                      </>
-                    ) : (
-                      <span style={{ color: '#666' }}>Not selected</span>
-                    )}
-                  </div>
-                </div>
-              )}
-              <StudentSearchResultsTable
-                results={manualSearchResults}
-                selectActions={{
-                  onSelectA: (row) => setManualPickA({ email: row.email, name: row.name }),
-                  onSelectB: (row) => setManualPickB({ email: row.email, name: row.name }),
-                  selectedAEmail: manualPickA?.email ?? null,
-                  selectedBEmail: manualPickB?.email ?? null,
-                }}
-              />
-              <button
-                type="button"
-                className="submit-button"
-                style={{ marginTop: 16 }}
-                onClick={() => void manualMatch()}
-              >
-                Match pair
-              </button>
-            </div>
           </div>
         )}
       </main>
