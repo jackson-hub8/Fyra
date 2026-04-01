@@ -325,7 +325,8 @@ export default function AdminMatching() {
                         <strong>{p.partnerName}</strong>
                         <div style={{ fontSize: 13, color: '#555' }}>{p.partnerEmail}</div>
                         <div style={{ fontSize: 13, marginTop: 6 }}>
-                          Similarity score: <strong>{p.similarityScore.toFixed(3)}</strong>
+                          Similarity score:{' '}
+                          <strong>{`${(p.similarityScore * 100).toFixed(1)}%`}</strong>
                         </div>
                         <div className="admin-possible-actions">
                           <button type="button" className="submit-button" onClick={() => void approve(p.id)}>
