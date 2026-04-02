@@ -88,6 +88,7 @@ export default function AdminMatching() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [mutualRequests, setMutualRequests] = useState<MutualRequestPair[]>([]);
+  const [rejectMutualKey, setRejectMutualKey] = useState<string | null>(null);
   const [unmatchLoadingId, setUnmatchLoadingId] = useState<number | null>(null);
 
   const loadUnmatched = useCallback(async () => {
@@ -266,6 +267,39 @@ export default function AdminMatching() {
     }
   };
 
+  const mutualPairKey = (p: MutualRequestPair) =>
+    [p.user1.email, p.user2.email].map((e) => e.toLowerCase()).sort().join('|');
+
+  const rejectMutualMatchRequests = async (p: MutualRequestPair) => {
+    if (
+      !window.confirm(
+        'Remove these mutual match requests? Neither student will be matched; they can request again from search later.',
+      )
+    ) {
+      return;
+    }
+    const key = mutualPairKey(p);
+    setError('');
+    setRejectMutualKey(key);
+    try {
+      const res = await fetch('/api/admin/reject-match-requests', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userEmailA: p.user1.email,
+          userEmailB: p.user2.email,
+        }),
+      });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) throw new Error(data.error ?? 'Reject failed');
+      await loadMutualRequests();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error');
+    } finally {
+      setRejectMutualKey(null);
+    }
+  };
+
   const unmatchRoom = async (matchId: number) => {
     if (
       !window.confirm(
@@ -432,6 +466,14 @@ export default function AdminMatching() {
                       disabled={pairModalLoading}
                     >
                       View questionnaires
+                    </button>
+                    <button
+                      type="button"
+                      className="back-button"
+                      disabled={rejectMutualKey === mutualPairKey(p)}
+                      onClick={() => void rejectMutualMatchRequests(p)}
+                    >
+                      {rejectMutualKey === mutualPairKey(p) ? 'Working…' : 'Reject'}
                     </button>
                   </div>
                 </li>
