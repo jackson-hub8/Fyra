@@ -34,6 +34,8 @@ model Users {
   matchesAsUser2       Matches[] @relation("User2Matches")
   possibleMatchesAsUser1 PossibleMatches[] @relation("PossibleMatchUser1")
   possibleMatchesAsUser2 PossibleMatches[] @relation("PossibleMatchUser2")
+  matchRequestsFrom      MatchRequest[]    @relation("MatchRequestFrom")
+  matchRequestsTo        MatchRequest[]    @relation("MatchRequestTo")
 
   @@map("users")
 }
@@ -111,6 +113,7 @@ model PrivateQuestionnaire {
   userEmail             String   @unique @db.VarChar(255)
   gender                String?  @db.VarChar(100)
   sexAssignedAtBirth    String?  @db.VarChar(10)
+  classStanding         String?  @db.VarChar(50)
   adaAccommodations     String?  @db.Text
   animalAllergies       String?  @db.Text
   varsitySport          String?  @db.Text
@@ -163,6 +166,21 @@ model SwipeActions {
   @@index([swiperEmail])
   @@index([targetEmail])
   @@map("swipe_actions")
+}
+
+model MatchRequest {
+  id        Int      @id @default(autoincrement())
+  fromEmail String   @db.VarChar(255)
+  toEmail   String   @db.VarChar(255)
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+
+  fromUser Users @relation("MatchRequestFrom", fields: [fromEmail], references: [email], onDelete: Cascade)
+  toUser   Users @relation("MatchRequestTo", fields: [toEmail], references: [email], onDelete: Cascade)
+
+  @@unique([fromEmail, toEmail])
+  @@index([fromEmail])
+  @@index([toEmail])
+  @@map("match_requests")
 }
 
 model PossibleMatches {

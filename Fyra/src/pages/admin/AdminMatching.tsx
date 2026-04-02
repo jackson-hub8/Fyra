@@ -27,6 +27,11 @@ type MatchedPair = {
   user2: { email: string; name: string };
 };
 
+type MutualRequestPair = {
+  user1: { email: string; name: string };
+  user2: { email: string; name: string };
+};
+
 function QuestionnairePanel({
   heading,
   email,
@@ -66,7 +71,7 @@ export default function AdminMatching() {
   const { user, signOut } = useAuth();
   const token = user?.adminToken ?? '';
 
-  const [tab, setTab] = useState<'unmatched' | 'matched'>('unmatched');
+  const [tab, setTab] = useState<'unmatched' | 'matched' | 'requested'>('unmatched');
   const [unmatchedUsers, setUnmatchedUsers] = useState<UnmatchedUser[]>([]);
   const [matchedPairs, setMatchedPairs] = useState<MatchedPair[]>([]);
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
@@ -82,8 +87,8 @@ export default function AdminMatching() {
   const [pairModalLoading, setPairModalLoading] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [manualA, setManualA] = useState('');
-  const [manualB, setManualB] = useState('');
+  const [mutualRequests, setMutualRequests] = useState<MutualRequestPair[]>([]);
+  const [rejectMutualKey, setRejectMutualKey] = useState<string | null>(null);
   const [unmatchLoadingId, setUnmatchLoadingId] = useState<number | null>(null);
 
   const loadUnmatched = useCallback(async () => {
@@ -120,10 +125,28 @@ export default function AdminMatching() {
     }
   }, [token]);
 
+  const loadMutualRequests = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/admin/mutual-match-requests', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = (await res.json()) as { mutual?: MutualRequestPair[]; error?: string };
+      if (!res.ok) throw new Error(data.error ?? 'Failed to load');
+      setMutualRequests(data.mutual ?? []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error');
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
   useEffect(() => {
     if (tab === 'unmatched') void loadUnmatched();
-    else void loadMatched();
-  }, [tab, loadUnmatched, loadMatched]);
+    else if (tab === 'matched') void loadMatched();
+    else void loadMutualRequests();
+  }, [tab, loadUnmatched, loadMatched, loadMutualRequests]);
 
   const selectUser = async (email: string) => {
     setSelectedEmail(email);
@@ -141,17 +164,19 @@ export default function AdminMatching() {
     }
   };
 
-  const openPairQuestionnaires = async (partnerEmail: string, partnerName: string) => {
-    if (!selectedEmail) return;
-    const primaryName =
-      unmatchedUsers.find((u) => u.email === selectedEmail)?.name ?? selectedEmail;
+  const openPairQuestionnairesForEmails = async (
+    primaryEmail: string,
+    primaryName: string,
+    partnerEmail: string,
+    partnerName: string,
+  ) => {
     setPairModalLoading(true);
     setError('');
     setPairModal(null);
     try {
       const headers = { Authorization: `Bearer ${token}` };
       const [resA, resB] = await Promise.all([
-        fetch(`/api/admin/private-questionnaire?email=${encodeURIComponent(selectedEmail)}`, {
+        fetch(`/api/admin/private-questionnaire?email=${encodeURIComponent(primaryEmail)}`, {
           headers,
         }),
         fetch(`/api/admin/private-questionnaire?email=${encodeURIComponent(partnerEmail)}`, {
@@ -164,7 +189,7 @@ export default function AdminMatching() {
       if (!resB.ok) throw new Error(dataB.error ?? 'Could not load second questionnaire');
       setPairModal({
         primaryName,
-        primaryEmail: selectedEmail,
+        primaryEmail,
         partnerName,
         partnerEmail,
         questionnairePrimary: dataA.questionnaire ?? null,
@@ -175,6 +200,13 @@ export default function AdminMatching() {
     } finally {
       setPairModalLoading(false);
     }
+  };
+
+  const openPairQuestionnaires = async (partnerEmail: string, partnerName: string) => {
+    if (!selectedEmail) return;
+    const primaryName =
+      unmatchedUsers.find((u) => u.email === selectedEmail)?.name ?? selectedEmail;
+    await openPairQuestionnairesForEmails(selectedEmail, primaryName, partnerEmail, partnerName);
   };
 
   const approve = async (possibleMatchId: number) => {
@@ -190,6 +222,7 @@ export default function AdminMatching() {
       if (selectedEmail) await selectUser(selectedEmail);
       await loadUnmatched();
       await loadMatched();
+      await loadMutualRequests();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error');
     }
@@ -207,27 +240,63 @@ export default function AdminMatching() {
       if (!res.ok) throw new Error(data.error ?? 'Reject failed');
       if (selectedEmail) await selectUser(selectedEmail);
       await loadUnmatched();
+      await loadMutualRequests();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error');
     }
   };
 
-  const manualMatch = async () => {
+  const matchPairFromMutualRequest = async (p: MutualRequestPair) => {
     setError('');
     try {
       const res = await fetch('/api/admin/manual-match', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userEmailA: manualA.trim(), userEmailB: manualB.trim() }),
+        body: JSON.stringify({
+          userEmailA: p.user1.email,
+          userEmailB: p.user2.email,
+        }),
       });
       const data = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(data.error ?? 'Manual match failed');
-      setManualA('');
-      setManualB('');
+      if (!res.ok) throw new Error(data.error ?? 'Match failed');
       await loadUnmatched();
       await loadMatched();
+      await loadMutualRequests();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error');
+    }
+  };
+
+  const mutualPairKey = (p: MutualRequestPair) =>
+    [p.user1.email, p.user2.email].map((e) => e.toLowerCase()).sort().join('|');
+
+  const rejectMutualMatchRequests = async (p: MutualRequestPair) => {
+    if (
+      !window.confirm(
+        'Remove these mutual match requests? Neither student will be matched; they can request again from search later.',
+      )
+    ) {
+      return;
+    }
+    const key = mutualPairKey(p);
+    setError('');
+    setRejectMutualKey(key);
+    try {
+      const res = await fetch('/api/admin/reject-match-requests', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userEmailA: p.user1.email,
+          userEmailB: p.user2.email,
+        }),
+      });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) throw new Error(data.error ?? 'Reject failed');
+      await loadMutualRequests();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error');
+    } finally {
+      setRejectMutualKey(null);
     }
   };
 
@@ -251,6 +320,7 @@ export default function AdminMatching() {
       if (!res.ok) throw new Error(data.error ?? 'Unmatch failed');
       await loadUnmatched();
       await loadMatched();
+      await loadMutualRequests();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error');
     } finally {
@@ -258,7 +328,8 @@ export default function AdminMatching() {
     }
   };
 
-  const pageTitle = tab === 'unmatched' ? 'Unmatched' : 'Matched';
+  const pageTitle =
+    tab === 'unmatched' ? 'Unmatched' : tab === 'matched' ? 'Matched' : 'Requested';
 
   return (
     <div className="profile-page admin-matching-page">
@@ -356,6 +427,64 @@ export default function AdminMatching() {
           </div>
         )}
 
+        {tab === 'requested' && (
+          <div className="admin-matched-block">
+            <h3 className="form-title" style={{ fontSize: '1.1rem' }}>
+              Requested matches
+            </h3>
+            <p style={{ fontSize: 14, color: '#555', marginBottom: 12 }}>
+              Pairs who used student search to request each other mutually. Match them to create a room.
+            </p>
+            <ul className="admin-matched-scroll">
+              {mutualRequests.map((p) => (
+                <li key={`${p.user1.email}-${p.user2.email}`} className="admin-matched-pair-row">
+                  <div className="admin-matched-pair-info">
+                    <strong>{p.user1.name}</strong> &amp; <strong>{p.user2.name}</strong>
+                    <div style={{ fontSize: 12, color: '#666' }}>
+                      {p.user1.email} — {p.user2.email}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    <button
+                      type="button"
+                      className="submit-button"
+                      onClick={() => void matchPairFromMutualRequest(p)}
+                    >
+                      Match pair
+                    </button>
+                    <button
+                      type="button"
+                      className="back-button"
+                      onClick={() =>
+                        void openPairQuestionnairesForEmails(
+                          p.user1.email,
+                          p.user1.name,
+                          p.user2.email,
+                          p.user2.name,
+                        )
+                      }
+                      disabled={pairModalLoading}
+                    >
+                      View questionnaires
+                    </button>
+                    <button
+                      type="button"
+                      className="back-button"
+                      disabled={rejectMutualKey === mutualPairKey(p)}
+                      onClick={() => void rejectMutualMatchRequests(p)}
+                    >
+                      {rejectMutualKey === mutualPairKey(p) ? 'Working…' : 'Reject'}
+                    </button>
+                  </div>
+                </li>
+              ))}
+              {mutualRequests.length === 0 && (
+                <li style={{ color: '#666' }}>No mutual match requests yet.</li>
+              )}
+            </ul>
+          </div>
+        )}
+
         {tab === 'matched' && (
           <div className="admin-matched-block">
             <h3 className="form-title" style={{ fontSize: '1.1rem' }}>
@@ -381,32 +510,6 @@ export default function AdminMatching() {
                 </li>
               ))}
             </ul>
-
-            <div className="admin-manual-block">
-              <h3 className="form-title" style={{ fontSize: '1.1rem', marginTop: 0 }}>
-                Manual match
-              </h3>
-              <p style={{ fontSize: 14, color: '#555', marginBottom: 8 }}>
-                Create a roommate pair without a pending possible match.
-              </p>
-              <input
-                className="password-input"
-                placeholder="User email A"
-                value={manualA}
-                onChange={(e) => setManualA(e.target.value)}
-                style={{ marginBottom: 8, display: 'block', maxWidth: 400 }}
-              />
-              <input
-                className="password-input"
-                placeholder="User email B"
-                value={manualB}
-                onChange={(e) => setManualB(e.target.value)}
-                style={{ marginBottom: 8, display: 'block', maxWidth: 400 }}
-              />
-              <button type="button" className="submit-button" onClick={() => void manualMatch()}>
-                Match pair
-              </button>
-            </div>
           </div>
         )}
       </main>
@@ -418,6 +521,13 @@ export default function AdminMatching() {
           onClick={() => setTab('unmatched')}
         >
           Unmatched
+        </button>
+        <button
+          type="button"
+          className={`nav-item ${tab === 'requested' ? 'active' : ''}`}
+          onClick={() => setTab('requested')}
+        >
+          Requested
         </button>
         <button
           type="button"

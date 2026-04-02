@@ -1,0 +1,82 @@
+.student-results-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  background: white;
+}
+
+.student-results-caption {
+  background: #a12d2e;
+  color: white;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.05rem;
+  padding: 12px 16px;
+  margin: 0;
+}
+
+.student-results-table thead th {
+  background: #f5d5d8;
+  color: #111;
+  font-weight: 700;
+  font-size: 14px;
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e0b8bc;
+}
+
+.student-results-table tbody td {
+  padding: 10px 12px;
+  font-size: 14px;
+  border-bottom: 1px solid #eee;
+  vertical-align: top;
+}
+
+.student-results-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.student-results-name-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: #1a6fb0;
+  text-decoration: underline;
+  cursor: pointer;
+  text-align: left;
+}
+
+.student-results-name-link:hover {
+  color: #145a8f;
+}
+
+.student-search-select-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.student-search-mini-btn {
+  font-size: 12px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #a12d2e;
+  background: white;
+  color: #a12d2e;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-weight: 600;
+}
+
+.student-search-mini-btn:hover:not(:disabled) {
+  background: #fdf5f5;
+}
+
+.student-search-mini-btn:disabled {
+  opacity: 0.65;
+  cursor: default;
+}

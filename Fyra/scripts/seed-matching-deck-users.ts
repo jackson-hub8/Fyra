@@ -2,6 +2,11 @@
 /// Removes legacy swipe1–swipe20 test accounts, then creates 20 new users with full
 /// private questionnaires, placeholder profile photos, and seeded PossibleMatches with
 /// mixed similarity scores and varying counts of possible matches per user.
+///
+/// Cohort split for testing deck/search sex filtering: swipe1–10 are Female (Woman);
+/// swipe11–20 are Male (Man). Each has classStanding cycled Freshman–Senior.
+/// Male/Female pairs are excluded from deck and student search via isPairBlocked.
+///
 /// Run: npx tsx scripts/seed-matching-deck-users.ts
 
 import type { Prisma } from '@prisma/client';
@@ -17,6 +22,8 @@ const SWIPE_EMAILS = Array.from({ length: 20 }, (_, i) => `swipe${i + 1}@transy.
 
 const PLACEHOLDER_PHOTO = (n: number) =>
   `https://picsum.photos/seed/fyra-swipe-${n}/400/400`;
+
+const STANDINGS = ['Freshman', 'Sophomore', 'Junior', 'Senior'] as const;
 
 type QData = Omit<Prisma.PrivateQuestionnaireUncheckedCreateInput, 'userEmail' | 'id'>;
 
@@ -571,16 +578,18 @@ const BIOS = [
 ];
 
 /**
- * Possible-match graph: path 1–2–…–20 (swipe20 has 1 edge; others mostly 2–3) plus chords
- * so several users have 3 possible matches. Similarity scores are computeSimilarityScore
- * on the 20 distinct questionnaires (mixed values in 0–1).
+ * Possible-match graph: two paths (Female 1–10, Male 11–20) plus same-cohort chords only,
+ * so we never seed cross-sex possible matches (aligned with isPairBlocked sex rule).
  */
 function buildPossibleMatchEdges(): [number, number][] {
   const edges: [number, number][] = [];
-  for (let i = 1; i < 20; i++) {
+  for (let i = 1; i < 10; i++) {
     edges.push([i, i + 1]);
   }
-  edges.push([1, 11], [2, 12], [3, 13], [6, 16], [7, 17]);
+  for (let i = 11; i < 20; i++) {
+    edges.push([i, i + 1]);
+  }
+  edges.push([1, 5], [2, 8], [3, 7], [11, 15], [12, 18], [13, 17]);
   return edges;
 }
 
@@ -656,6 +665,9 @@ async function main() {
   const test2Q: QData = {
     ...USER_QUESTIONNAIRES[0],
     animalAllergies: '',
+    classStanding: 'Senior',
+    sexAssignedAtBirth: 'Female',
+    gender: 'Woman',
   };
   await prisma.privateQuestionnaire.upsert({
     where: { userEmail: 'test2@transy.edu' },
@@ -690,10 +702,14 @@ async function main() {
       },
     });
 
+    const femaleCohort = n <= 10;
     await prisma.privateQuestionnaire.create({
       data: {
         userEmail: email,
         ...qData,
+        sexAssignedAtBirth: femaleCohort ? 'Female' : 'Male',
+        gender: femaleCohort ? 'Woman' : 'Man',
+        classStanding: STANDINGS[i % 4],
       },
     });
 
@@ -718,8 +734,8 @@ async function main() {
     await upsertPossiblePair(`swipe${a}@transy.edu`, `swipe${b}@transy.edu`);
   }
 
-  console.log('\nDone. Login as test2@transy.edu / password123 to browse the deck.');
-  console.log('Swipe users: swipe1@transy.edu … swipe20@transy.edu / password123');
+  console.log('\nDone. Login as test2@transy.edu / password123 (Female; deck/search show swipe1–10 only).');
+  console.log('Swipe users swipe1–10: Female; swipe11–20: Male / password123');
 }
 
 main()

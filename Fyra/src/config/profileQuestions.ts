@@ -1,6 +1,9 @@
 /// file: profileQuestions.ts
 /// Jackson Hurley, Kaitlyn Maes, Cam Horine
-/// Profile setup: 24 private questions (1–24).
+/// Profile setup: 25 private questions (1–25).
+
+/** Stored values must match DB / search filter exactly. */
+export const CLASS_STANDING_OPTIONS = ['Freshman', 'Sophomore', 'Junior', 'Senior'] as const;
 
 export type AllergyCategory = {
   category: string;
@@ -32,6 +35,7 @@ export type QuestionDef = {
 export type PrivateQuestionnairePayload = {
   gender: string;
   sexAssignedAtBirth: string;
+  classStanding: string;
   adaAccommodations: string;
   animalAllergies: string;
   varsitySport: string;
@@ -80,6 +84,16 @@ export const PROFILE_QUESTIONS: QuestionDef[][] = [
         { value: '', label: 'Select...' },
         { value: 'Female', label: 'Female' },
         { value: 'Male', label: 'Male' },
+      ],
+    },
+    {
+      id: 'classStanding',
+      label: 'What is your standing? *',
+      required: true,
+      type: 'select',
+      options: [
+        { value: '', label: 'Select...' },
+        ...CLASS_STANDING_OPTIONS.map((v) => ({ value: v, label: v })),
       ],
     },
     {

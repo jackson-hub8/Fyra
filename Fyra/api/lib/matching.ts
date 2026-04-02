@@ -63,11 +63,29 @@ export function isNicotineOrCannabisSmoker(q: Pick<PrivateQuestionnaire, 'smokin
   return q.smoking === 'Smoker' || q.cannabis === 'Smoker';
 }
 
-/** True if these two must not be paired (deck filter); symmetric. */
-export function isPairBlocked(
-  qA: Pick<PrivateQuestionnaire, 'animalAllergies' | 'smoking' | 'cannabis'>,
-  qB: Pick<PrivateQuestionnaire, 'animalAllergies' | 'smoking' | 'cannabis'>,
+/** True when sex assigned at birth is Male vs Female (housing policy: no mixed-sex pairing). */
+export function isOppositeBinarySexPair(
+  sexA: string | null | undefined,
+  sexB: string | null | undefined,
 ): boolean {
+  const a = sexA?.trim() ?? '';
+  const b = sexB?.trim() ?? '';
+  if (!a || !b) return false;
+  return (a === 'Male' && b === 'Female') || (a === 'Female' && b === 'Male');
+}
+
+/** True if these two must not be paired (deck, search, swipe sync); symmetric. */
+export function isPairBlocked(
+  qA: Pick<
+    PrivateQuestionnaire,
+    'animalAllergies' | 'smoking' | 'cannabis' | 'sexAssignedAtBirth'
+  >,
+  qB: Pick<
+    PrivateQuestionnaire,
+    'animalAllergies' | 'smoking' | 'cannabis' | 'sexAssignedAtBirth'
+  >,
+): boolean {
+  if (isOppositeBinarySexPair(qA.sexAssignedAtBirth, qB.sexAssignedAtBirth)) return true;
   return (
     (hasSmokeAllergy(qA.animalAllergies) && isNicotineOrCannabisSmoker(qB)) ||
     (hasSmokeAllergy(qB.animalAllergies) && isNicotineOrCannabisSmoker(qA))

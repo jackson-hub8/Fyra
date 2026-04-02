@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { requireAdmin } from '../lib/adminAuth.js';
 import { setAdminCors } from '../lib/cors.js';
 import { canonicalPair } from '../lib/matching.js';
+import { matchRequestsInvolvingEmails } from '../lib/matchRequestCleanup.js';
 
 const prisma = new PrismaClient();
 
@@ -37,6 +38,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const [u1, u2] = canonicalPair(a, b);
 
     await prisma.$transaction(async (tx) => {
+      await tx.matchRequest.deleteMany({
+        where: matchRequestsInvolvingEmails([a, b]),
+      });
       await tx.possibleMatches.deleteMany({
         where: {
           OR: [{ userEmail1: { in: [a, b] } }, { userEmail2: { in: [a, b] } }],
