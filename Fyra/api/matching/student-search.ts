@@ -94,7 +94,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       select: {
         email: true,
         name: true,
-        privateQuestionnaire: { select: { classStanding: true, animalAllergies: true, smoking: true, cannabis: true } },
+        privateQuestionnaire: {
+          select: {
+            classStanding: true,
+            animalAllergies: true,
+            smoking: true,
+            cannabis: true,
+            sexAssignedAtBirth: true,
+          },
+        },
       },
     });
 
