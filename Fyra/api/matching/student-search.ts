@@ -1,10 +1,10 @@
-/// POST: Levenshtein-ranked unmatched peers (up to 5 within distance cutoff), optional standing filter, excludes isPairBlocked.
+/// POST: Levenshtein-ranked unmatched peers (top 5), optional standing filter, excludes isPairBlocked.
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
 import { isPairBlocked } from '../lib/matching.js';
 import { isValidClassStanding } from '../lib/classStanding.js';
-import { levenshtein, maxAllowedLevenshteinForNameSearch, normalizeForSearch } from '../lib/levenshtein.js';
+import { levenshtein } from '../lib/levenshtein.js';
 
 const prisma = new PrismaClient();
 
@@ -54,8 +54,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!queryName) {
     return res.status(400).json({ error: 'Enter a first name and/or last name' });
   }
-  const queryNormLen = normalizeForSearch(queryName).length;
-
   let standingFilter: string | undefined;
   if (standingRaw) {
     if (!isValidClassStanding(standingRaw)) {
@@ -113,9 +111,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (standingFilter && (!tq || tq.classStanding !== standingFilter)) continue;
       if (viewerQ && tq && isPairBlocked(viewerQ, tq)) continue;
       const distance = levenshtein(queryName, u.name);
-      const targetNormLen = normalizeForSearch(u.name).length;
-      const maxDist = maxAllowedLevenshteinForNameSearch(queryNormLen, targetNormLen);
-      if (distance > maxDist) continue;
       scored.push({
         email: u.email,
         name: u.name,

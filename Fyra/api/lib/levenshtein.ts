@@ -1,23 +1,5 @@
 /** Levenshtein edit distance on Unicode code points (sufficient for names). */
 
-/** Fraction of the longer normalized string length used as a soft cap (typo tolerance). */
-const NAME_SEARCH_DISTANCE_RATIO = 0.42;
-/** Never require more than this many edits to count as a match (avoids filling slots with unrelated names). */
-const NAME_SEARCH_DISTANCE_ABS_CAP = 12;
-/** Minimum allowed distance so short names still allow a couple of typos. */
-const NAME_SEARCH_DISTANCE_MIN = 2;
-
-/**
- * Max edit distance for a name to appear in student search results. Scales with the
- * longer of query vs full name so short queries stay strict and longer names allow more typos.
- * Results are still capped at 5 after filtering; there may be 0–5 rows.
- */
-export function maxAllowedLevenshteinForNameSearch(queryLen: number, targetLen: number): number {
-  const longer = Math.max(1, queryLen, targetLen);
-  const scaled = Math.ceil(longer * NAME_SEARCH_DISTANCE_RATIO);
-  return Math.min(NAME_SEARCH_DISTANCE_ABS_CAP, Math.max(NAME_SEARCH_DISTANCE_MIN, scaled));
-}
-
 export function normalizeForSearch(s: string): string {
   return s.trim().toLowerCase();
 }
