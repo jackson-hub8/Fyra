@@ -170,6 +170,139 @@
   }
 }
 
+/* Report profile */
+.matching-report-row {
+  display: flex;
+  justify-content: center;
+  padding: 0 16px 8px;
+  flex-shrink: 0;
+}
+
+.matching-report-open-btn {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+  background: transparent;
+  border: none;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  padding: 8px 12px;
+}
+
+.matching-report-open-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.matching-report-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.matching-report-dialog {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 20px 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-sizing: border-box;
+}
+
+.matching-report-title {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #222;
+}
+
+.matching-report-hint {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #666;
+  line-height: 1.4;
+}
+
+.matching-report-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+  margin-bottom: 6px;
+}
+
+.matching-report-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 15px;
+  padding: 10px 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  resize: vertical;
+  min-height: 72px;
+}
+
+.matching-report-textarea:focus {
+  outline: none;
+  border-color: #333;
+}
+
+.matching-report-counter {
+  text-align: right;
+  font-size: 12px;
+  color: #888;
+  margin-top: 4px;
+}
+
+.matching-report-inline-error {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #a12d2e;
+  font-weight: 500;
+}
+
+.matching-report-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.matching-report-cancel,
+.matching-report-submit {
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid #ccc;
+  background: #fff;
+  color: #333;
+}
+
+.matching-report-submit {
+  background: #333;
+  color: #fff;
+  border-color: #333;
+}
+
+.matching-report-cancel:disabled,
+.matching-report-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Action buttons */
 .matching-actions {
   display: flex;

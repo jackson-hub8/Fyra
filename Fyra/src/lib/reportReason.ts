@@ -1,0 +1,1 @@
+export const REPORT_REASON_MAX_LENGTH = 50;

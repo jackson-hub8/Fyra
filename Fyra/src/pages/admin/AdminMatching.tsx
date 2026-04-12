@@ -32,6 +32,16 @@ type MutualRequestPair = {
   user2: { email: string; name: string };
 };
 
+type ReportedStudent = { email: string; name: string; reportCount: number };
+
+type ReportDetailRow = {
+  id: number;
+  reason: string;
+  createdAt: string;
+  reporterEmail: string;
+  reporterName: string;
+};
+
 function QuestionnairePanel({
   heading,
   email,
@@ -71,7 +81,7 @@ export default function AdminMatching() {
   const { user, signOut } = useAuth();
   const token = user?.adminToken ?? '';
 
-  const [tab, setTab] = useState<'unmatched' | 'matched' | 'requested'>('unmatched');
+  const [tab, setTab] = useState<'unmatched' | 'matched' | 'requested' | 'reports'>('unmatched');
   const [unmatchedUsers, setUnmatchedUsers] = useState<UnmatchedUser[]>([]);
   const [matchedPairs, setMatchedPairs] = useState<MatchedPair[]>([]);
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
@@ -90,6 +100,13 @@ export default function AdminMatching() {
   const [mutualRequests, setMutualRequests] = useState<MutualRequestPair[]>([]);
   const [rejectMutualKey, setRejectMutualKey] = useState<string | null>(null);
   const [unmatchLoadingId, setUnmatchLoadingId] = useState<number | null>(null);
+  const [reportStudents, setReportStudents] = useState<ReportedStudent[]>([]);
+  const [reportsDetailModal, setReportsDetailModal] = useState<{ email: string; name: string } | null>(
+    null,
+  );
+  const [reportsDetailRows, setReportsDetailRows] = useState<ReportDetailRow[]>([]);
+  const [reportsDetailLoading, setReportsDetailLoading] = useState(false);
+  const [suspendBusyEmail, setSuspendBusyEmail] = useState<string | null>(null);
 
   const loadUnmatched = useCallback(async () => {
     setLoading(true);
@@ -142,11 +159,76 @@ export default function AdminMatching() {
     }
   }, [token]);
 
+  const loadReportsSummary = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/admin/reports/summary', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = (await res.json()) as { students?: ReportedStudent[]; error?: string };
+      if (!res.ok) throw new Error(data.error ?? 'Failed to load');
+      setReportStudents(data.students ?? []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error');
+      setReportStudents([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
   useEffect(() => {
     if (tab === 'unmatched') void loadUnmatched();
     else if (tab === 'matched') void loadMatched();
-    else void loadMutualRequests();
-  }, [tab, loadUnmatched, loadMatched, loadMutualRequests]);
+    else if (tab === 'requested') void loadMutualRequests();
+    else void loadReportsSummary();
+  }, [tab, loadUnmatched, loadMatched, loadMutualRequests, loadReportsSummary]);
+
+  const openReportsDetail = async (email: string, name: string) => {
+    setReportsDetailModal({ email, name });
+    setReportsDetailRows([]);
+    setReportsDetailLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/admin/reports/detail?email=${encodeURIComponent(email)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = (await res.json()) as { reports?: ReportDetailRow[]; error?: string };
+      if (!res.ok) throw new Error(data.error ?? 'Failed to load');
+      setReportsDetailRows(data.reports ?? []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error');
+      setReportsDetailModal(null);
+    } finally {
+      setReportsDetailLoading(false);
+    }
+  };
+
+  const suspendAccount = async (email: string) => {
+    if (
+      !window.confirm(
+        `Suspend this account (${email})? The student will not be able to log in until reactivated in the database.`,
+      )
+    ) {
+      return;
+    }
+    setSuspendBusyEmail(email);
+    setError('');
+    try {
+      const res = await fetch('/api/admin/suspend-user', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) throw new Error(data.error ?? 'Suspend failed');
+      await loadReportsSummary();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error');
+    } finally {
+      setSuspendBusyEmail(null);
+    }
+  };
 
   const selectUser = async (email: string) => {
     setSelectedEmail(email);
@@ -329,7 +411,13 @@ export default function AdminMatching() {
   };
 
   const pageTitle =
-    tab === 'unmatched' ? 'Unmatched' : tab === 'matched' ? 'Matched' : 'Requested';
+    tab === 'unmatched'
+      ? 'Unmatched'
+      : tab === 'matched'
+        ? 'Matched'
+        : tab === 'requested'
+          ? 'Requested'
+          : 'Reports';
 
   return (
     <div className="profile-page admin-matching-page">
@@ -355,7 +443,9 @@ export default function AdminMatching() {
 
       <main className="profile-main admin-matching-main">
         {error && <div className="error-message">{error}</div>}
-        {loading && !pairModalLoading && <p className="profile-loading">Loading…</p>}
+        {loading && !pairModalLoading && !reportsDetailLoading && (
+          <p className="profile-loading">Loading…</p>
+        )}
 
         {tab === 'unmatched' && (
           <div className="admin-matching-split">
@@ -485,6 +575,51 @@ export default function AdminMatching() {
           </div>
         )}
 
+        {tab === 'reports' && (
+          <div className="admin-matched-block">
+            <h3 className="form-title" style={{ fontSize: '1.1rem' }}>
+              Reported students
+            </h3>
+            <p style={{ fontSize: 14, color: '#555', marginBottom: 12 }}>
+              Sorted by number of reports (highest first). Suspending disables login for that student.
+            </p>
+            <ul className="admin-matched-scroll">
+              {reportStudents.map((s) => (
+                <li key={s.email} className="admin-matched-pair-row">
+                  <div className="admin-matched-pair-info">
+                    <div>
+                      <strong>{s.name}</strong>
+                      <span className="admin-report-count-badge">{s.reportCount} reports</span>
+                    </div>
+                    <div style={{ fontSize: 12, color: '#666' }}>{s.email}</div>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    <button
+                      type="button"
+                      className="back-button"
+                      onClick={() => void openReportsDetail(s.email, s.name)}
+                      disabled={reportsDetailLoading}
+                    >
+                      View reports
+                    </button>
+                    <button
+                      type="button"
+                      className="admin-unmatch-btn"
+                      disabled={suspendBusyEmail === s.email}
+                      onClick={() => void suspendAccount(s.email)}
+                    >
+                      {suspendBusyEmail === s.email ? 'Working…' : 'Suspend account'}
+                    </button>
+                  </div>
+                </li>
+              ))}
+              {reportStudents.length === 0 && !loading && (
+                <li style={{ color: '#666' }}>No profile reports yet.</li>
+              )}
+            </ul>
+          </div>
+        )}
+
         {tab === 'matched' && (
           <div className="admin-matched-block">
             <h3 className="form-title" style={{ fontSize: '1.1rem' }}>
@@ -536,7 +671,73 @@ export default function AdminMatching() {
         >
           Matched
         </button>
+        <button
+          type="button"
+          className={`nav-item ${tab === 'reports' ? 'active' : ''}`}
+          onClick={() => setTab('reports')}
+        >
+          Reports
+        </button>
       </nav>
+
+      {reportsDetailModal && (
+        <div
+          className="admin-pair-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="admin-reports-detail-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !reportsDetailLoading) {
+              setReportsDetailModal(null);
+              setReportsDetailRows([]);
+            }
+          }}
+        >
+          <div className="admin-pair-modal admin-reports-detail-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-pair-modal-header">
+              <h2 id="admin-reports-detail-title">
+                Reports: {reportsDetailModal.name}
+              </h2>
+              <button
+                type="button"
+                className="admin-pair-modal-close"
+                onClick={() => {
+                  setReportsDetailModal(null);
+                  setReportsDetailRows([]);
+                }}
+                disabled={reportsDetailLoading}
+              >
+                Close
+              </button>
+            </div>
+            <div className="admin-pair-modal-body">
+              <p className="admin-q-email" style={{ marginTop: 0 }}>
+                {reportsDetailModal.email}
+              </p>
+              {reportsDetailLoading && <p className="profile-loading">Loading…</p>}
+              {!reportsDetailLoading && reportsDetailRows.length === 0 && (
+                <p style={{ color: '#666' }}>No report rows found.</p>
+              )}
+              {!reportsDetailLoading && reportsDetailRows.length > 0 && (
+                <ul className="admin-reports-detail-list">
+                  {reportsDetailRows.map((r) => (
+                    <li key={r.id} className="admin-reports-detail-item">
+                      <div className="admin-reports-detail-meta">
+                        <strong>{r.reporterName}</strong>
+                        <span className="admin-reports-detail-email">{r.reporterEmail}</span>
+                        <span className="admin-reports-detail-date">
+                          {new Date(r.createdAt).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="admin-reports-detail-reason">{r.reason}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {(pairModalLoading || pairModal) && (
         <div
