@@ -31,15 +31,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const users = await prisma.users.findMany({
       where: { email: { in: emails } },
-      select: { email: true, name: true },
+      select: { email: true, name: true, isActive: true },
     });
-    const nameByEmail = new Map(users.map((u) => [u.email, u.name]));
+    const byEmail = new Map(users.map((u) => [u.email, u]));
 
-    const students = grouped.map((g) => ({
-      email: g.reportedEmail,
-      name: nameByEmail.get(g.reportedEmail) ?? g.reportedEmail,
-      reportCount: g._count.id,
-    }));
+    // Reports tab: only active students (suspended users are managed on the Suspended tab).
+    const students = grouped
+      .filter((g) => byEmail.get(g.reportedEmail)?.isActive === true)
+      .map((g) => ({
+        email: g.reportedEmail,
+        name: byEmail.get(g.reportedEmail)?.name ?? g.reportedEmail,
+        reportCount: g._count.id,
+      }));
 
     return res.status(200).json({ students });
   } catch (e) {

@@ -10,6 +10,7 @@ import {
   formatPrivateQuestionnaireAnswer,
   getPrivateQuestionnaireAdminLabel,
 } from '../../config/profileQuestions';
+import ProfileCard from '../../components/ProfileCard';
 
 type UnmatchedUser = { email: string; name: string };
 type PossibleRow = {
@@ -684,14 +685,24 @@ export default function AdminMatching() {
                     <strong>{u.name}</strong>
                     <div style={{ fontSize: 12, color: '#666' }}>{u.email}</div>
                   </div>
-                  <button
-                    type="button"
-                    className="submit-button"
-                    disabled={unsuspendBusyEmail === u.email}
-                    onClick={() => void unsuspendAccount(u.email)}
-                  >
-                    {unsuspendBusyEmail === u.email ? 'Working…' : 'Unsuspend'}
-                  </button>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    <button
+                      type="button"
+                      className="back-button"
+                      onClick={() => void openReportsDetail(u.email, u.name)}
+                      disabled={reportsDetailLoading}
+                    >
+                      View reports
+                    </button>
+                    <button
+                      type="button"
+                      className="submit-button"
+                      disabled={unsuspendBusyEmail === u.email}
+                      onClick={() => void unsuspendAccount(u.email)}
+                    >
+                      {unsuspendBusyEmail === u.email ? 'Working…' : 'Unsuspend'}
+                    </button>
+                  </div>
                 </li>
               ))}
               {suspendedUsers.length === 0 && !loading && (
@@ -784,7 +795,7 @@ export default function AdminMatching() {
           <div className="admin-pair-modal admin-reports-detail-modal" onClick={(e) => e.stopPropagation()}>
             <div className="admin-pair-modal-header">
               <h2 id="admin-reports-detail-title">
-                Reports: {reportsDetailModal.name}
+                Profile &amp; reports: {reportsDetailModal.name}
               </h2>
               <button
                 type="button"
@@ -798,32 +809,42 @@ export default function AdminMatching() {
                 Close
               </button>
             </div>
-            <div className="admin-pair-modal-body">
-              <p className="admin-q-email" style={{ marginTop: 0 }}>
-                {reportsDetailModal.email}
-              </p>
-              {reportsDetailLoading && <p className="profile-loading">Loading…</p>}
-              {!reportsDetailLoading && reportsDetailRows.length === 0 && (
-                <p style={{ color: '#666' }}>No report rows found.</p>
-              )}
-              {!reportsDetailLoading && reportsDetailRows.length > 0 && (
-                <ul className="admin-reports-detail-list">
-                  {reportsDetailRows.map((r) => (
-                    <li key={r.id} className="admin-reports-detail-item">
-                      <div className="admin-reports-detail-meta">
-                        <strong>{r.reporterName}</strong>
-                        <span className="admin-reports-detail-email">{r.reporterEmail}</span>
-                        <span className="admin-reports-detail-date">
-                          {new Date(r.createdAt).toLocaleString()}
-                        </span>
-                      </div>
-                      <p className="admin-reports-detail-reason">
-                        {r.reason.trim() ? r.reason : <em className="admin-reports-no-reason">No reason given</em>}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              )}
+            <div className="admin-pair-modal-body admin-reports-detail-body">
+              <div className="admin-reports-detail-profile">
+                <ProfileCard email={reportsDetailModal.email} readOnly />
+              </div>
+              <div className="admin-reports-detail-reports-column">
+                <h3 className="admin-reports-detail-reports-heading">Reports</h3>
+                <p className="admin-q-email" style={{ marginTop: 0 }}>
+                  {reportsDetailModal.email}
+                </p>
+                {reportsDetailLoading && <p className="profile-loading">Loading reports…</p>}
+                {!reportsDetailLoading && reportsDetailRows.length === 0 && (
+                  <p style={{ color: '#666' }}>No report rows found.</p>
+                )}
+                {!reportsDetailLoading && reportsDetailRows.length > 0 && (
+                  <ul className="admin-reports-detail-list">
+                    {reportsDetailRows.map((r) => (
+                      <li key={r.id} className="admin-reports-detail-item">
+                        <div className="admin-reports-detail-meta">
+                          <strong>{r.reporterName}</strong>
+                          <span className="admin-reports-detail-email">{r.reporterEmail}</span>
+                          <span className="admin-reports-detail-date">
+                            {new Date(r.createdAt).toLocaleString()}
+                          </span>
+                        </div>
+                        <p className="admin-reports-detail-reason">
+                          {r.reason.trim() ? (
+                            r.reason
+                          ) : (
+                            <em className="admin-reports-no-reason">No reason given</em>
+                          )}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
           </div>
         </div>
