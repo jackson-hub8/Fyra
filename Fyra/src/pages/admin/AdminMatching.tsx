@@ -81,7 +81,9 @@ export default function AdminMatching() {
   const { user, signOut } = useAuth();
   const token = user?.adminToken ?? '';
 
-  const [tab, setTab] = useState<'unmatched' | 'matched' | 'requested' | 'reports'>('unmatched');
+  const [tab, setTab] = useState<'unmatched' | 'matched' | 'requested' | 'reports' | 'suspended'>(
+    'unmatched',
+  );
   const [unmatchedUsers, setUnmatchedUsers] = useState<UnmatchedUser[]>([]);
   const [matchedPairs, setMatchedPairs] = useState<MatchedPair[]>([]);
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
@@ -107,6 +109,8 @@ export default function AdminMatching() {
   const [reportsDetailRows, setReportsDetailRows] = useState<ReportDetailRow[]>([]);
   const [reportsDetailLoading, setReportsDetailLoading] = useState(false);
   const [suspendBusyEmail, setSuspendBusyEmail] = useState<string | null>(null);
+  const [suspendedUsers, setSuspendedUsers] = useState<UnmatchedUser[]>([]);
+  const [unsuspendBusyEmail, setUnsuspendBusyEmail] = useState<string | null>(null);
 
   const loadUnmatched = useCallback(async () => {
     setLoading(true);
@@ -177,12 +181,37 @@ export default function AdminMatching() {
     }
   }, [token]);
 
+  const loadSuspendedUsers = useCallback(async (quiet?: boolean) => {
+    if (!quiet) {
+      setLoading(true);
+      setError('');
+    }
+    try {
+      const res = await fetch('/api/admin/suspended-users', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = (await res.json()) as { users?: UnmatchedUser[]; error?: string };
+      if (!res.ok) throw new Error(data.error ?? 'Failed to load');
+      setSuspendedUsers(data.users ?? []);
+    } catch (e) {
+      if (!quiet) {
+        setError(e instanceof Error ? e.message : 'Error');
+      }
+      setSuspendedUsers([]);
+    } finally {
+      if (!quiet) {
+        setLoading(false);
+      }
+    }
+  }, [token]);
+
   useEffect(() => {
     if (tab === 'unmatched') void loadUnmatched();
     else if (tab === 'matched') void loadMatched();
     else if (tab === 'requested') void loadMutualRequests();
-    else void loadReportsSummary();
-  }, [tab, loadUnmatched, loadMatched, loadMutualRequests, loadReportsSummary]);
+    else if (tab === 'reports') void loadReportsSummary();
+    else void loadSuspendedUsers();
+  }, [tab, loadUnmatched, loadMatched, loadMutualRequests, loadReportsSummary, loadSuspendedUsers]);
 
   const openReportsDetail = async (email: string, name: string) => {
     setReportsDetailModal({ email, name });
@@ -207,7 +236,7 @@ export default function AdminMatching() {
   const suspendAccount = async (email: string) => {
     if (
       !window.confirm(
-        `Suspend this account (${email})? The student will not be able to log in until reactivated in the database.`,
+        `Suspend this account (${email})? They cannot log in or appear in search or matching until you unsuspend them on the Suspended tab.`,
       )
     ) {
       return;
@@ -223,10 +252,34 @@ export default function AdminMatching() {
       const data = (await res.json()) as { error?: string };
       if (!res.ok) throw new Error(data.error ?? 'Suspend failed');
       await loadReportsSummary();
+      void loadSuspendedUsers(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error');
     } finally {
       setSuspendBusyEmail(null);
+    }
+  };
+
+  const unsuspendAccount = async (email: string) => {
+    if (!window.confirm(`Unsuspend ${email}? They will be able to log in and appear in search and matching again.`)) {
+      return;
+    }
+    setUnsuspendBusyEmail(email);
+    setError('');
+    try {
+      const res = await fetch('/api/admin/unsuspend-user', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) throw new Error(data.error ?? 'Unsuspend failed');
+      await loadSuspendedUsers(true);
+      void loadUnmatched();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error');
+    } finally {
+      setUnsuspendBusyEmail(null);
     }
   };
 
@@ -417,7 +470,9 @@ export default function AdminMatching() {
         ? 'Matched'
         : tab === 'requested'
           ? 'Requested'
-          : 'Reports';
+          : tab === 'reports'
+            ? 'Reports'
+            : 'Suspended';
 
   return (
     <div className="profile-page admin-matching-page">
@@ -580,9 +635,6 @@ export default function AdminMatching() {
             <h3 className="form-title" style={{ fontSize: '1.1rem' }}>
               Reported students
             </h3>
-            <p style={{ fontSize: 14, color: '#555', marginBottom: 12 }}>
-              Sorted by number of reports (highest first). Suspending disables login for that student.
-            </p>
             <ul className="admin-matched-scroll">
               {reportStudents.map((s) => (
                 <li key={s.email} className="admin-matched-pair-row">
@@ -615,6 +667,35 @@ export default function AdminMatching() {
               ))}
               {reportStudents.length === 0 && !loading && (
                 <li style={{ color: '#666' }}>No profile reports yet.</li>
+              )}
+            </ul>
+          </div>
+        )}
+
+        {tab === 'suspended' && (
+          <div className="admin-matched-block">
+            <h3 className="form-title" style={{ fontSize: '1.1rem' }}>
+              Suspended students
+            </h3>
+            <ul className="admin-matched-scroll">
+              {suspendedUsers.map((u) => (
+                <li key={u.email} className="admin-matched-pair-row">
+                  <div className="admin-matched-pair-info">
+                    <strong>{u.name}</strong>
+                    <div style={{ fontSize: 12, color: '#666' }}>{u.email}</div>
+                  </div>
+                  <button
+                    type="button"
+                    className="submit-button"
+                    disabled={unsuspendBusyEmail === u.email}
+                    onClick={() => void unsuspendAccount(u.email)}
+                  >
+                    {unsuspendBusyEmail === u.email ? 'Working…' : 'Unsuspend'}
+                  </button>
+                </li>
+              ))}
+              {suspendedUsers.length === 0 && !loading && (
+                <li style={{ color: '#666' }}>No suspended students.</li>
               )}
             </ul>
           </div>
@@ -677,6 +758,13 @@ export default function AdminMatching() {
           onClick={() => setTab('reports')}
         >
           Reports
+        </button>
+        <button
+          type="button"
+          className={`nav-item ${tab === 'suspended' ? 'active' : ''}`}
+          onClick={() => setTab('suspended')}
+        >
+          Suspended
         </button>
       </nav>
 

@@ -65,9 +65,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const searcher = await prisma.users.findUnique({
       where: { email: searcherEmail },
-      select: { isMatched: true, isAdmin: true },
+      select: { isMatched: true, isAdmin: true, isActive: true },
     });
     if (!searcher) return res.status(404).json({ error: 'User not found' });
+    if (!searcher.isAdmin && !searcher.isActive) {
+      return res.status(403).json({ error: 'Account suspended' });
+    }
     if (searcher.isMatched) return res.status(403).json({ error: 'Already matched' });
     if (searcher.isAdmin) return res.status(403).json({ error: 'Not available for admin accounts' });
 

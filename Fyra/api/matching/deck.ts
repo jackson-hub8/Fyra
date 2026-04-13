@@ -34,6 +34,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    const viewer = await prisma.users.findUnique({
+      where: { email },
+      select: { isActive: true, isAdmin: true },
+    });
+    if (!viewer) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    if (!viewer.isAdmin && !viewer.isActive) {
+      return res.status(403).json({ error: 'Account suspended' });
+    }
+
     const swipedTargets = await prisma.swipeActions.findMany({
       where: { swiperEmail: email },
       select: { targetEmail: true },
