@@ -39,11 +39,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const [fromUser, toUser] = await Promise.all([
-      prisma.users.findUnique({ where: { email: fromEmail }, select: { isMatched: true } }),
-      prisma.users.findUnique({ where: { email: toEmail }, select: { isMatched: true } }),
+      prisma.users.findUnique({
+        where: { email: fromEmail },
+        select: { isMatched: true, isActive: true, isAdmin: true },
+      }),
+      prisma.users.findUnique({
+        where: { email: toEmail },
+        select: { isMatched: true, isActive: true, isAdmin: true },
+      }),
     ]);
     if (!fromUser || !toUser) {
       return res.status(404).json({ error: 'One or both users not found' });
+    }
+    if (!fromUser.isActive || !toUser.isActive) {
+      return res.status(400).json({ error: 'Match requests are not available for suspended accounts' });
     }
     if (fromUser.isMatched || toUser.isMatched) {
       return res.status(400).json({ error: 'Both users must be unmatched' });

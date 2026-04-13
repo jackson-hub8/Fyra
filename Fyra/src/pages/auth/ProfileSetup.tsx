@@ -1,6 +1,6 @@
 /// file: ProfileSetup.tsx
 /// Jackson Hurley, Kaitlyn Maes, Cam Horine
-/// Profile setup: 25 private questions (multi-page) + build profile (bio, interests, daily life, pet peeves).
+/// Profile setup: 25 private questions (multi-page) + build profile (bio, interests, daily activities, pet peeves).
 
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -200,7 +200,7 @@ export default function ProfileSetup() {
 
   const validateBuildProfile = () => {
     if (!bio.trim()) {
-      setError('Please provide a bio.');
+      setError('Bio is required — add a short introduction before continuing.');
       return false;
     }
     if (topInterests.length < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
@@ -212,11 +212,11 @@ export default function ProfileSetup() {
       return false;
     }
     if (dailyLife.length < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
-      setError(`Please add at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} daily life items.`);
+      setError(`Please add at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} daily activities.`);
       return false;
     }
     if (dailyLife.length > MAX_PUBLIC_PROFILE_LIST_ITEMS) {
-      setError(`Please have at most ${MAX_PUBLIC_PROFILE_LIST_ITEMS} daily life items.`);
+      setError(`Please have at most ${MAX_PUBLIC_PROFILE_LIST_ITEMS} daily activities.`);
       return false;
     }
     if (petPeeves.length < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
@@ -373,7 +373,14 @@ export default function ProfileSetup() {
           {buildProfile ? 'Build your profile' : `Profile setup (${page + 1} of ${TOTAL_QUESTION_PAGES})`}
         </h2>
         <p className="form-title-subtitle">
-          {buildProfile ? 'All information on this section will be on your public profile' : 'Your answers to this questionnaire will remain private'}
+          {buildProfile ? (
+            <>
+              Everything here is visible on your public profile.{' '}
+              <strong>A bio is required</strong> (plus the lists below) before you can finish setup and use matching.
+            </>
+          ) : (
+            'Your answers to this questionnaire will remain private'
+          )}
         </p>
         {error && <div className="error-message">{error}</div>}
 

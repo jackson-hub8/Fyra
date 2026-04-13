@@ -122,6 +122,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return res.status(401).json({ error: 'Invalid email or password' });
         }
 
+        if (!user.isAdmin && !user.isActive) {
+          return res.status(403).json({ error: 'Account suspended.' });
+        }
+
         const isAdmin = user.isAdmin;
         if (isAdmin) {
           const { signAdminToken } = await import('./jwtAdmin.js');

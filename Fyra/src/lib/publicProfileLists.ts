@@ -1,4 +1,4 @@
-/** Minimum entries for each public list field (top interests, daily life, roommate pet peeves). */
+/** Minimum entries for each public list field (top interests, daily activities, roommate pet peeves). */
 export const MIN_PUBLIC_PROFILE_LIST_ITEMS = 3;
 
 /** Maximum entries the user may add in each of those sections. */

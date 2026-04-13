@@ -63,6 +63,17 @@
   line-height: 1.4;
 }
 
+.profile-field-hint-emphasis {
+  color: #444;
+  font-weight: 600;
+  margin-top: 0;
+}
+
+.profile-required-mark {
+  color: #a12d2e;
+  font-weight: 700;
+}
+
 .profile-photo-file-input {
   position: absolute;
   width: 0;

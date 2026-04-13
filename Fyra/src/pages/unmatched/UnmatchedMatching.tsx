@@ -5,6 +5,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import ProfileCard from '../../components/ProfileCard';
+import { REPORT_REASON_MAX_LENGTH } from '../../lib/reportReason';
 import './UnmatchedMatching.css';
 
 const SWIPE_THRESHOLD_PX = 80;
@@ -23,6 +24,10 @@ export default function UnmatchedMatching() {
   const [dragOffset, setDragOffset] = useState(0);
   const [exitDirection, setExitDirection] = useState<'left' | 'right' | null>(null);
   const [pointerDown, setPointerDown] = useState(false);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [reportMessage, setReportMessage] = useState('');
   const dragStartRef = useRef<number>(0);
   const dragOffsetRef = useRef<number>(0);
   const pendingSwipeRef = useRef<{ targetEmail: string; action: 'like' | 'pass' } | null>(null);
@@ -31,6 +36,54 @@ export default function UnmatchedMatching() {
 
   const currentEmail = deck[currentIndex] ?? null;
   const nextEmails = [deck[currentIndex + 1], deck[currentIndex + 2]].filter(Boolean) as string[];
+
+  const openReportModal = useCallback(() => {
+    setReportMessage('');
+    setReportReason('');
+    setReportModalOpen(true);
+  }, []);
+
+  const closeReportModal = useCallback(() => {
+    if (reportSubmitting) return;
+    setReportModalOpen(false);
+    setReportReason('');
+    setReportMessage('');
+  }, [reportSubmitting]);
+
+  const submitReport = useCallback(async () => {
+    if (!user?.email || !currentEmail) return;
+    const trimmed = reportReason.trim();
+    if (trimmed.length > REPORT_REASON_MAX_LENGTH) {
+      setReportMessage(`Reason must be at most ${REPORT_REASON_MAX_LENGTH} characters.`);
+      return;
+    }
+    setReportSubmitting(true);
+    setReportMessage('');
+    try {
+      const res = await fetch('/api/matching/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reporterEmail: user.email,
+          reportedEmail: currentEmail,
+          reason: trimmed.length ? trimmed : undefined,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        setReportMessage(data.error ?? 'Could not submit report');
+        return;
+      }
+      setReportModalOpen(false);
+      setReportReason('');
+      setReportMessage('');
+      setError('');
+    } catch {
+      setReportMessage('Something went wrong');
+    } finally {
+      setReportSubmitting(false);
+    }
+  }, [user?.email, currentEmail, reportReason]);
 
   const fetchDeck = useCallback(async () => {
     if (!user?.email) return;
@@ -283,12 +336,22 @@ export default function UnmatchedMatching() {
             )}
             </div>
           </div>
+          <div className="matching-report-row">
+            <button
+              type="button"
+              className="matching-report-open-btn"
+              onClick={openReportModal}
+              disabled={swiping || !!exitDirection || reportModalOpen}
+            >
+              Report profile
+            </button>
+          </div>
           <div className="matching-actions">
             <button
               type="button"
               className="matching-btn matching-btn-pass"
               onClick={() => triggerSwipe('pass')}
-              disabled={swiping || !!exitDirection}
+              disabled={swiping || !!exitDirection || reportModalOpen}
               aria-label="Pass"
             >
               <span aria-hidden>×</span>
@@ -297,7 +360,7 @@ export default function UnmatchedMatching() {
               type="button"
               className="matching-btn matching-btn-like"
               onClick={() => triggerSwipe('like')}
-              disabled={swiping || !!exitDirection}
+              disabled={swiping || !!exitDirection || reportModalOpen}
               aria-label="Like"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -306,6 +369,63 @@ export default function UnmatchedMatching() {
             </button>
           </div>
         </>
+      )}
+
+      {reportModalOpen && currentEmail && (
+        <div
+          className="matching-report-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="matching-report-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) closeReportModal();
+          }}
+        >
+          <div className="matching-report-dialog" onClick={(e) => e.stopPropagation()}>
+            <h2 id="matching-report-title" className="matching-report-title">
+              Report this profile
+            </h2>
+            <p className="matching-report-hint">
+              You can optionally add a short note. 50 characters max.
+            </p>
+            <label className="matching-report-label" htmlFor="matching-report-reason">
+              Reason <span className="matching-report-optional">(optional)</span>
+            </label>
+            <textarea
+              id="matching-report-reason"
+              className="matching-report-textarea"
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value.slice(0, REPORT_REASON_MAX_LENGTH))}
+              maxLength={REPORT_REASON_MAX_LENGTH}
+              rows={3}
+              disabled={reportSubmitting}
+              placeholder="Add details if you want…"
+            />
+            {reportMessage && (
+              <div className="matching-report-inline-error" role="alert">
+                {reportMessage}
+              </div>
+            )}
+            <div className="matching-report-actions">
+              <button
+                type="button"
+                className="matching-report-cancel"
+                onClick={closeReportModal}
+                disabled={reportSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="matching-report-submit"
+                onClick={() => void submitReport()}
+                disabled={reportSubmitting}
+              >
+                {reportSubmitting ? 'Sending…' : 'Submit report'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

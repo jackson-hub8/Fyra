@@ -36,8 +36,24 @@ model Users {
   possibleMatchesAsUser2 PossibleMatches[] @relation("PossibleMatchUser2")
   matchRequestsFrom      MatchRequest[]    @relation("MatchRequestFrom")
   matchRequestsTo        MatchRequest[]    @relation("MatchRequestTo")
+  reportsMade            ProfileReport[]   @relation("ReportsMade")
+  reportsReceived        ProfileReport[]   @relation("ReportsReceived")
 
   @@map("users")
+}
+
+model ProfileReport {
+  id             Int      @id @default(autoincrement())
+  reporterEmail  String   @db.VarChar(255)
+  reportedEmail  String   @db.VarChar(255)
+  reason         String   @db.VarChar(50)
+  createdAt      DateTime @default(now()) @db.Timestamp(6)
+
+  reporter Users @relation("ReportsMade", fields: [reporterEmail], references: [email], onDelete: Cascade)
+  reported Users @relation("ReportsReceived", fields: [reportedEmail], references: [email], onDelete: Cascade)
+
+  @@index([reportedEmail])
+  @@map("profile_reports")
 }
 
 model UserProfiles {

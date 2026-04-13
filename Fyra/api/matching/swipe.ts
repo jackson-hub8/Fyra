@@ -89,11 +89,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const [swiper, target] = await Promise.all([
-      prisma.users.findUnique({ where: { email: swiperEmail }, select: { isMatched: true } }),
-      prisma.users.findUnique({ where: { email: targetEmail }, select: { isMatched: true } }),
+      prisma.users.findUnique({
+        where: { email: swiperEmail },
+        select: { isMatched: true, isActive: true, isAdmin: true },
+      }),
+      prisma.users.findUnique({
+        where: { email: targetEmail },
+        select: { isMatched: true, isActive: true, isAdmin: true },
+      }),
     ]);
     if (!swiper) return res.status(404).json({ error: 'Swiper user not found' });
     if (!target) return res.status(404).json({ error: 'Target user not found' });
+    if (!swiper.isAdmin && !swiper.isActive) {
+      return res.status(403).json({ error: 'Account suspended' });
+    }
+    if (!target.isActive) {
+      return res.status(400).json({ error: 'That user is not available' });
+    }
     if (swiper.isMatched) return res.status(403).json({ error: 'You are already matched' });
     if (target.isMatched) return res.status(400).json({ error: 'That user is already matched' });
 

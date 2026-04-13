@@ -1,6 +1,6 @@
 /// file: ProfileCard.tsx
 /// Jackson Hurley, Kaitlyn Maes, Cam Horine
-/// Profile card: view/edit bio, photo, interests, daily life, pet peeves.
+/// Profile card: view/edit bio, photo, interests, daily activities, pet peeves.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -150,11 +150,11 @@ export default function ProfileCard({ email, readOnly = false }: ProfileCardProp
       return;
     }
     if (editDailyLife.length < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
-      setError(`Daily life must have at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} items.`);
+      setError(`Daily activities must have at least ${MIN_PUBLIC_PROFILE_LIST_ITEMS} items.`);
       return;
     }
     if (editDailyLife.length > MAX_PUBLIC_PROFILE_LIST_ITEMS) {
-      setError(`Daily life must have at most ${MAX_PUBLIC_PROFILE_LIST_ITEMS} items.`);
+      setError(`Daily activities must have at most ${MAX_PUBLIC_PROFILE_LIST_ITEMS} items.`);
       return;
     }
     if (editPetPeeves.length < MIN_PUBLIC_PROFILE_LIST_ITEMS) {
@@ -389,7 +389,7 @@ export default function ProfileCard({ email, readOnly = false }: ProfileCardProp
                   </div>
                 </div>
                 <div className="profile-edit-form">
-                  <label>Daily life</label>
+                  <label>Daily activities</label>
                   <p className="profile-field-hint">
                     {MIN_PUBLIC_PROFILE_LIST_ITEMS}–{MAX_PUBLIC_PROFILE_LIST_ITEMS} items; max{' '}
                     {OPEN_TEXT_MAX_LENGTH} characters each.
@@ -481,7 +481,7 @@ export default function ProfileCard({ email, readOnly = false }: ProfileCardProp
                     {!profile.topInterests?.trim() && <li className="profile-empty">None added yet.</li>}
                   </ul>
                 </div>
-                <h3>Daily life</h3>
+                <h3>Daily activities</h3>
                 <ul>
                   {(profile.dailyLife ?? '').split(/[\n,]+/).map((s) => s.trim()).filter(Boolean).map((item, i) => (
                     <li key={i}>{item}</li>
