@@ -1,6 +1,6 @@
 /// File: profiles.ts
 /// Jackson Hurley, Kaitlyn Maes, Cameron Horine
-/// API for user profile (display): bio, photo, topInterests, dailyLife. GET by user, PATCH update.
+/// API for user profile (display): bio, photo, topInterests, dailyLife (daily activities). GET by user, PATCH update.
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
 import { OPEN_TEXT_MAX_LENGTH, PROFILE_BIO_MAX_LENGTH } from '../lib/textFieldLimits.js';
@@ -86,7 +86,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const dailyItems = parsePublicProfileList(mergedDaily);
       const topErr = publicProfileListFieldError(topItems, 'Top interests');
       if (topErr) return res.status(400).json({ error: topErr });
-      const dailyErr = publicProfileListFieldError(dailyItems, 'Daily life');
+      const dailyErr = publicProfileListFieldError(dailyItems, 'Daily activities');
       if (dailyErr) return res.status(400).json({ error: dailyErr });
 
       if (user.profileSetupComplete) {

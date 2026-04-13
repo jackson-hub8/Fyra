@@ -56,7 +56,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (topErr) return res.status(400).json({ error: topErr });
     const dailyErr = publicProfileListFieldError(
       parsePublicProfileList(profile.dailyLife),
-      'Daily life',
+      'Daily activities',
     );
     if (dailyErr) return res.status(400).json({ error: dailyErr });
     const petRows = await prisma.petPeeves.findMany({
