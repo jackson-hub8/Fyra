@@ -326,6 +326,11 @@
   border-left: 3px solid #a12d2e;
 }
 
+.admin-reports-no-reason {
+  color: #666;
+  font-style: italic;
+}
+
 @media (max-width: 768px) {
   .admin-matching-split {
     flex-direction: column;

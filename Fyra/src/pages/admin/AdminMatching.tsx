@@ -729,7 +729,9 @@ export default function AdminMatching() {
                           {new Date(r.createdAt).toLocaleString()}
                         </span>
                       </div>
-                      <p className="admin-reports-detail-reason">{r.reason}</p>
+                      <p className="admin-reports-detail-reason">
+                        {r.reason.trim() ? r.reason : <em className="admin-reports-no-reason">No reason given</em>}
+                      </p>
                     </li>
                   ))}
                 </ul>

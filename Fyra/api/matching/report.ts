@@ -47,7 +47,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const body = parseJsonBody(req);
   const reporterEmail = typeof body.reporterEmail === 'string' ? body.reporterEmail.trim().toLowerCase() : '';
   const reportedEmail = typeof body.reportedEmail === 'string' ? body.reportedEmail.trim().toLowerCase() : '';
-  const reasonRaw = typeof body.reason === 'string' ? body.reason.trim() : '';
+  const reasonRaw =
+    body.reason === undefined || body.reason === null
+      ? ''
+      : typeof body.reason === 'string'
+        ? body.reason.trim()
+        : '';
 
   if (!reporterEmail || !reportedEmail) {
     return res.status(400).json({ error: 'reporterEmail and reportedEmail are required' });
@@ -55,9 +60,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (reporterEmail === reportedEmail) {
     return res.status(400).json({ error: 'Cannot report yourself' });
   }
-  if (reasonRaw.length === 0 || reasonRaw.length > REPORT_REASON_MAX_LENGTH) {
+  if (reasonRaw.length > REPORT_REASON_MAX_LENGTH) {
     return res.status(400).json({
-      error: `Reason must be between 1 and ${REPORT_REASON_MAX_LENGTH} characters`,
+      error: `Reason must be at most ${REPORT_REASON_MAX_LENGTH} characters`,
     });
   }
 

@@ -53,8 +53,8 @@ export default function UnmatchedMatching() {
   const submitReport = useCallback(async () => {
     if (!user?.email || !currentEmail) return;
     const trimmed = reportReason.trim();
-    if (trimmed.length === 0 || trimmed.length > REPORT_REASON_MAX_LENGTH) {
-      setReportMessage(`Please enter a reason (1–${REPORT_REASON_MAX_LENGTH} characters).`);
+    if (trimmed.length > REPORT_REASON_MAX_LENGTH) {
+      setReportMessage(`Reason must be at most ${REPORT_REASON_MAX_LENGTH} characters.`);
       return;
     }
     setReportSubmitting(true);
@@ -66,7 +66,7 @@ export default function UnmatchedMatching() {
         body: JSON.stringify({
           reporterEmail: user.email,
           reportedEmail: currentEmail,
-          reason: trimmed,
+          reason: trimmed.length ? trimmed : undefined,
         }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string };
@@ -386,10 +386,10 @@ export default function UnmatchedMatching() {
               Report this profile
             </h2>
             <p className="matching-report-hint">
-              Tell us briefly why you are reporting this user ({REPORT_REASON_MAX_LENGTH} characters max).
+              You can optionally add a short note. 50 characters max.
             </p>
             <label className="matching-report-label" htmlFor="matching-report-reason">
-              Reason
+              Reason <span className="matching-report-optional">(optional)</span>
             </label>
             <textarea
               id="matching-report-reason"
@@ -399,10 +399,8 @@ export default function UnmatchedMatching() {
               maxLength={REPORT_REASON_MAX_LENGTH}
               rows={3}
               disabled={reportSubmitting}
+              placeholder="Add details if you want…"
             />
-            <div className="matching-report-counter">
-              {reportReason.length} / {REPORT_REASON_MAX_LENGTH}
-            </div>
             {reportMessage && (
               <div className="matching-report-inline-error" role="alert">
                 {reportMessage}
