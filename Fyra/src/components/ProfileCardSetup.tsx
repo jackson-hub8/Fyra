@@ -164,15 +164,7 @@ export default function ProfileCardSetup({
           {photoError && <div className="profile-photo-error">{photoError}</div>}
           <div className="profile-card-name">{name.trim() || email}</div>
           <div className="profile-edit-form">
-            <label htmlFor="profile-setup-bio">
-              Bio{' '}
-              <span className="profile-required-mark" aria-hidden="true">
-                *
-              </span>
-            </label>
-            <p id="profile-setup-bio-hint" className="profile-field-hint profile-field-hint-emphasis">
-              Required. Other students see this on your profile when browsing matches.
-            </p>
+            <label htmlFor="profile-setup-bio">Bio</label>
             <textarea
               id="profile-setup-bio"
               value={bio}
@@ -181,7 +173,6 @@ export default function ProfileCardSetup({
               rows={5}
               maxLength={PROFILE_BIO_MAX_LENGTH}
               aria-required="true"
-              aria-describedby="profile-setup-bio-hint"
             />
           </div>
         </div>

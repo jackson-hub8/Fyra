@@ -1,7 +1,7 @@
 .time-picker {
   display: grid;
-  grid-template-columns: minmax(4.75rem, 1fr) auto minmax(4.75rem, 1.35fr) minmax(5.25rem, 1fr);
-  gap: 6px 8px;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
+  gap: 4px 6px;
   align-items: center;
   width: 100%;
   max-width: 100%;
@@ -12,8 +12,9 @@
 .time-picker-select {
   box-sizing: border-box;
   width: 100%;
+  min-width: 0;
   min-height: 44px;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border: 2px solid #e0e0e0;
   border-radius: 8px;
   font-size: 16px;
@@ -26,8 +27,8 @@
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M2.5 4.5 L6 8 L9.5 4.5'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 10px center;
-  padding-right: 32px;
+  background-position: right 8px center;
+  padding-right: 28px;
   /* WebKit: avoid clipping the closed select’s label when the grid cell is tight */
   text-align: left;
 }
@@ -43,12 +44,16 @@
 }
 
 .time-picker-select--period {
-  padding-left: 10px;
-  padding-right: 28px;
+  width: auto;
+  min-width: 0;
+  max-width: 4.25rem;
+  padding-left: 8px;
+  padding-right: 24px;
+  justify-self: start;
 }
 
 .time-picker-separator {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: #333;
   line-height: 1;
@@ -67,5 +72,8 @@
   .time-picker-select--period {
     grid-column: 1 / -1;
     grid-row: 2;
+    max-width: none;
+    width: 100%;
+    justify-self: stretch;
   }
 }

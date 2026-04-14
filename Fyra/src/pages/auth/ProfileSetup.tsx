@@ -374,10 +374,7 @@ export default function ProfileSetup() {
         </h2>
         <p className="form-title-subtitle">
           {buildProfile ? (
-            <>
-              Everything here is visible on your public profile.{' '}
-              <strong>A bio is required</strong> (plus the lists below) before you can finish setup and use matching.
-            </>
+            'Everything here is visible on your public profile.'
           ) : (
             'Your answers to this questionnaire will remain private'
           )}
