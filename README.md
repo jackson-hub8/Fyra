@@ -1,3 +1,5 @@
+Currently not hosted so not working
+
 # Fyra
 
 A web application that improves roommate matching at Transylvania University. Students create profiles, complete a private questionnaire, and swipe on potential roommates. Fyra calculates a similarity score between students so administrators have better data to make final room assignments.
